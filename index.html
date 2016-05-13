@@ -1,8 +1,201 @@
 <!doctype html>
 <html>
-    <title>Editor</title>
+    <head>
+        <title>Editor</title>
+        <meta charset="utf-8" />
+        <style type="text/css">
+            .bold {
+                font-weight: bold;
+            }
+            strong {
+                color: blue;
+            }
+        </style>
+    </head>
     <body>
-        <h1>Editor</h1>
-        <p>Adam Dally</p>
+        <a href="" class="b-bold">Bold</a>
+        <main>
+            <h1>Editor</h1>
+            <h2>Hello <strong>World</strong></h2>
+
+            <p class="test">Adam Dally</p>
+        </main>
+        <script type="text/javascript">
+            //Setup
+            el = document.getElementsByTagName('main')[0];
+            el.contentEditable = true;
+            var range;
+            var selection;
+            var current, start, end;
+            el.addEventListener('mouseup', function(e) {
+                selection = window.getSelection();
+            });
+
+            function downwards(node) {
+                if (node.nodeType ==3) {
+                    console.log(node);
+                    return true;
+                }
+                var i;
+                childNodes = node.childNodes;
+                for (i = 0; i<childNodes.length; i++) {
+                    downwards(childNodes[i]);
+                }
+            }
+
+            document.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                if (!e.target.classList.contains('b-bold'))
+                    return;
+
+                var list = [],
+                    currentSelection = [],
+                    startParent, endParent,
+                    range = selection.getRangeAt(0);
+
+
+                /*
+                 ------------------Build Selection--------------
+                 */
+
+
+                if (range.startContainer!=range.endContainer) {
+                    console.log(range.commonAncestorContainer);
+                    //Start Container
+                    current = range.startContainer;
+                    currentSelection.push({
+                        node: current,
+                        startOffset: range.startOffset
+                    });
+
+                    //Find Start Parent
+                    while (current.parentElement != range.commonAncestorContainer)
+                        current = current.parentElement;
+                    startParent = current;
+
+                    //End Container
+                    current = range.endContainer;
+                    currentSelection.push({
+                        node: current,
+                        endOffset: range.endOffset
+                    });
+
+                    //Find End Parent
+                    var sibling;
+                    while (current.parentElement != range.commonAncestorContainer) {
+                        sibling = current;
+                        while (sibling.previousElementSibling) {
+                            sibling = sibling.previousElementSibling;
+                            console.log(sibling);
+                            currentSelection.push({
+                                node:sibling
+                            });
+                        }
+                        current = current.parentElement;
+                        console.log(sibling);
+                    }
+                    endParent = current;
+
+                    //Build Parents Sideways
+                    current = startParent;
+                    while (current.nextElementSibling != endParent) {
+                        current = current.nextElementSibling;
+                        currentSelection.push({
+                            node: current
+                        });
+                    }
+
+
+
+                    //We have the start node, end node, and every node whose parents are in between
+                    //now need the sibling elements who share the same parent
+
+                    //Build Right
+                    current = range.startContainer;
+                    while ((current.nextSibling) && (current.nextSibling != range.endContainer) && (current.nextSibling != endParent)) {
+                        current = current.nextSibling;
+                        currentSelection.push({
+                            node: current
+                        });
+                    }
+
+
+
+                } else {
+                    current = range.startContainer;
+                    currentSelection.push({
+                        node: current,
+                        startOffset: range.startOffset,
+                        endOffset: range.endOffset,
+                    });
+                }
+
+                /*
+                 ----------- Apply Bold  ----------------
+                 */
+                console.log(currentSelection);
+                currentSelection.forEach(function(current) {
+                    var text = "";
+                    if (current.node.nodeType == 3) {
+                        text = current.node.textContent;
+
+                        text= text.substring(current.startOffset || 0, current.endOffset ||text.length);
+
+                        console.log(text);
+
+                    } else {
+                        downwards(current.node);
+                    }
+                });
+
+
+                /*list.push(element.tagName);
+                if (element.className)
+                    list.push(element.className);
+                while (element.tagName != 'P') {
+                    element = element.parentElement;
+                    list.push(element.tagName);
+                    if (element.className)
+                        list.push(element.className);
+                }
+                console.debug(list);*/
+
+                /*if (selection.anchorNode.parentElement == selection.focusNode.parentElement) {
+
+                    //Traverse upward to see if parents already contain this class
+                    element = selection.anchorNode.parentElement;
+                    console.log(element);
+                    do {
+                        if (element.classList.contains('bold')) {
+                            return false;
+                        }
+                        element=element.parentElement;
+                    }
+                    while (element!=el)
+                    console.log('1');
+
+                    //Traverse downwards to remove elements with this class
+                    element = selection.anchorNode.parentElement;
+                    children = element.children;
+                    console.log(children);
+                    for (var i = 0; i < children.length; i++) {
+
+                        console.log(children[i]);
+                    }
+
+                    var newSpan = document.createElement('span');
+                    newSpan.classList.add('bold');
+                    newSpan.innerHTML = selection.toString();
+
+                    //var range = selection.getRangeAt(0);
+                    range.deleteContents();
+                    range.insertNode(newSpan);
+                }*/
+            });
+
+
+
+        </script>
     </body>
 </html>
