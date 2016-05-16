@@ -16,7 +16,10 @@
         </style>
     </head>
     <body>
-        <a href="" class="b-bold">Bold</a>
+        <nav>
+            <a href="" class="b-bold">Bold</a>
+            <a href="" class="b-strong">Strong/Blue</a>
+        </nav>
         <main>
             <h1>Editor</h1>
             <h2>Hello <strong>World</strong></h2>
@@ -35,48 +38,69 @@
                 selection = window.getSelection();
             });
 
-            function downwards(node) {
-                if (node.nodeType ==3) {
-                    console.log(node.textContent);
-                    console.log(node);
+            function joinAdjacentElements(element) {
+                var previous = element.previousElementSibling;
+                var next = element.nextElementSibling;
+                if (previous && previous.tagName == element.tagName && previous.className == element.className) {
+                    previous.innerHTML += element.innerHTML;
+                    element.parentElement.removeChild(element);
+                    element = previous;
+                }
+                if (next && next.tagName == element.tagName && next.className == element.className) {
+                    element.innerHTML += next.innerHTML;
+                    element.parentElement.removeChild(next);
+                }
+            }
+
+            function downwards(node, button, startOffset, endOffset) {
+                if (node.nodeType ==3)  {
                     var parent = node.parentElement;
 
-                    if (parent.tagName !='SPAN') {
+                    if (startOffset)
+                        node = node.splitText(startOffset);
+                    if (endOffset)
+                        node.splitText(endOffset);
 
+                    if (parent.tagName !='SPAN') {
                         var span = document.createElement('span');
                         span.classList.add('bold');
-                        span.innerHTML = node.textContent;
 
-                        parent.removeChild(node);
-                        parent.appendChild(span);
+                        parent.insertBefore(span, node);
+                        span.appendChild(node);
                     } else {
-                        if (parent.className == 'bold') {
+                        /*if (parent.className == 'bold') {
                             masterParent = parent.parentElement;
+                            masterParent.insertBefore(node,parent);
                             masterParent.removeChild(parent);
-                            masterParent.appendChild(node);
 
-                        }
+                        }*/
                     }
 
-
+                    joinAdjacentElements(node.parentElement);
                     return true;
                 }
                 var i;
                 childNodes = node.childNodes;
                 for (i = 0; i<childNodes.length; i++) {
-                    downwards(childNodes[i]);
+                    downwards(childNodes[i], button);
                 }
             }
 
-            document.addEventListener('click', function(e) {
+            document.getElementsByTagName('NAV')[0].addEventListener('click', function(e) {
                 e.preventDefault();
 
-                if (!e.target.classList.contains('b-bold'))
+                var button = null;
+                if (e.target.classList.contains('b-bold'))
+                    button = "bold";
+                if (e.target.classList.contains('b-strong'))
+                    button = "strong";
+
+                if (!button)
                     return;
 
                 var list = [],
                     currentSelection = [],
-                    startParent, endParent,
+                    startParent, endParent
                     range = selection.getRangeAt(0);
 
 
@@ -163,20 +187,7 @@
                  */
                 console.log(currentSelection);
                 currentSelection.forEach(function(current) {
-                    var text = "";
-                    if (current.node.nodeType == 3) {
-                        text = current.node.textContent;
-
-
-                        text= text.substring(current.startOffset || 0, (current.endOffset!=null)?current.endOffset:text.length);
-                        if (text == "")
-                            return;
-
-                        console.log(text);
-
-                    } else {
-                        downwards(current.node);
-                    }
+                    downwards(current.node, button, current.startOffset, current.endOffset);
                 });
 
             });
