@@ -5,7 +5,7 @@
         <meta charset="utf-8" />
         <style type="text/css">
             h1, h2, strong {
-                font-weight: normal;
+                font-weight: inherit;
             }
             .bold {
                 font-weight: bold;
@@ -31,6 +31,10 @@
             //Setup
             el = document.getElementsByTagName('main')[0];
             el.contentEditable = true;
+
+            var blockElements = ['H1', 'H2', 'P'],
+                inlineElements = ['SPAN', 'STRONG'];
+
             var range;
             var selection;
             var current, start, end;
@@ -39,17 +43,54 @@
             });
 
             function joinAdjacentElements(element) {
-                var previous = element.previousElementSibling;
-                var next = element.nextElementSibling;
-                if (previous && previous.tagName == element.tagName && previous.className == element.className) {
+                var previous = element.previousSibling;
+                var next = element.nextSibling;
+                var parent = element.parentElement;
+                var movingInside;
+                var movingOutside;
+
+                if (previous && previous.nodeType==1 && previous.tagName == element.tagName && previous.className == element.className) {
                     previous.innerHTML += element.innerHTML;
-                    element.parentElement.removeChild(element);
+                    parent.removeChild(element);
                     element = previous;
                 }
-                if (next && next.tagName == element.tagName && next.className == element.className) {
+                if (next && next.nodeType==1 && next.tagName == element.tagName && next.className == element.className) {
                     element.innerHTML += next.innerHTML;
-                    element.parentElement.removeChild(next);
+                    parent.removeChild(next);
                 }
+
+                //if we are the only element in parent
+                if (parent.children.length == 1) {
+
+                    //Not the best strategy, should move upward to common ancestor
+
+                    //If the parent is inline then move outward and call recursively
+                    if (inlineElements.indexOf(parent.tagName) >= 0) {
+
+                        //clone parent and append element
+                        movingInside = parent.cloneNode();
+                        movingOutside = element.cloneNode();
+                        movingInside.innerHTML = element.innerHTML;
+                        movingOutside.appendChild(movingInside);
+
+                        //append to parent parent
+                        parent.parentElement.appendChild(movingOutside);
+
+                        //delete parent and element
+                        parent.removeChild(element);
+                        parent.parentElement.removeChild(parent);
+
+                        joinAdjacentElements(movingOutside);
+
+                    }
+                }
+
+            }
+
+            function createParentElement(node, tagName) {
+                var element = document.createElement(tagName);
+                node.parentElement.insertBefore(element, node);
+                element.appendChild(node);
             }
 
             function downwards(node, button, startOffset, endOffset) {
@@ -58,15 +99,19 @@
 
                     if (startOffset)
                         node = node.splitText(startOffset);
-                    if (endOffset)
+                    if (endOffset && node.length > endOffset)
                         node.splitText(endOffset);
 
-                    if (parent.tagName !='SPAN') {
-                        var span = document.createElement('span');
-                        span.classList.add('bold');
+                    //If offsets are set then needs to create new inline element around
+                    //otherwise use parent
 
-                        parent.insertBefore(span, node);
-                        span.appendChild(node);
+                    if (startOffset || endOffset) {
+
+                    }
+
+                    if (parent.tagName !='SPAN') {
+                        createParentElement(node, 'SPAN');
+                        node.parentElement.classList = 'bold';
                     } else {
                         /*if (parent.className == 'bold') {
                             masterParent = parent.parentElement;
@@ -76,6 +121,7 @@
                         }*/
                     }
 
+                    //Not the best strategy, should move upward to common ancestor
                     joinAdjacentElements(node.parentElement);
                     return true;
                 }
