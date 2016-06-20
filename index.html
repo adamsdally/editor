@@ -10,22 +10,29 @@
             .bold {
                 font-weight: bold;
             }
+            .nobold {
+                font-weight: normal;
+            }
+            .red {
+                color: red;
+            }
             strong {
                 color: blue;
             }
         </style>
+        <script type="text/javascript" src="js/buildSelection.js"></script>
     </head>
     <body>
         <nav>
-            <a href="" class="b-bold">Bold</a>
-            <a href="" class="b-strong">Strong/Blue</a>
+            <a href="" class="b-bold" data-action="bold">Bold</a>
+            <a href="" class="b-strong" data-action="strong">Remove</a>
         </nav>
         <main>
-            <h1>Editor</h1>
+            <h1>Editor Test</h1>
+            <p class="test">By: Adam Dally</p>
             <h2>Hello <strong>World</strong></h2>
-
-            <p class="test">Adam Dally</p>
-            <p>Red green <strong>Blue</strong> yellow</p>
+            <p>Red Green <strong>Blue</strong> Yellow</p>
+            <p>Click and type to edit.</p>
         </main>
         <script type="text/javascript">
             //Setup
@@ -35,8 +42,17 @@
             var blockElements = ['H1', 'H2', 'P'],
                 inlineElements = ['SPAN', 'STRONG'];
 
+            var actions = {
+                'bold': {
+                    'class': 'bold',
+                },
+                'strong':  {
+                    'class': '',
+                },
+            };
+
             var range;
-            var selection;
+            var selection = window.getSelection();
             var current, start, end;
             el.addEventListener('mouseup', function(e) {
                 selection = window.getSelection();
@@ -91,149 +107,76 @@
                 var element = document.createElement(tagName);
                 node.parentElement.insertBefore(element, node);
                 element.appendChild(node);
+                return element;
             }
 
-            function downwards(node, button, startOffset, endOffset) {
-                if (node.nodeType ==3)  {
+            function createChildElement(node, tagName) {
+                var element = document.createElement(tagName);
+                element.innerHTML = node.innerHTML;
+                node.innerHTML = "";
+                node.appendChild(element);
+            }
+
+            function downwards(node, action, startOffset, endOffset) {
+                var i, childNodes;
+
+                if (blockElements.indexOf(node.tagName) != -1)
+                     return node.classList = action['class'];
+
+                if (inlineElements.indexOf(node.tagName) != -1)
+                    return node.classList = action['class'];
+
+                if (node.nodeType ==3 && node.nodeValue.trim())  {
                     var parent = node.parentElement;
 
                     if (startOffset)
                         node = node.splitText(startOffset);
                     if (endOffset && node.length > endOffset)
-                        node.splitText(endOffset);
+                        node.splitText(endOffset-1);
 
-                    //If offsets are set then needs to create new inline element around
-                    //otherwise use parent
-
-                    if (startOffset || endOffset) {
-
-                    }
-
-                    if (parent.tagName !='SPAN') {
-                        createParentElement(node, 'SPAN');
-                        node.parentElement.classList = 'bold';
-                    } else {
-                        /*if (parent.className == 'bold') {
-                            masterParent = parent.parentElement;
-                            masterParent.insertBefore(node,parent);
-                            masterParent.removeChild(parent);
-
-                        }*/
-                    }
-
-                    //Not the best strategy, should move upward to common ancestor
-                    joinAdjacentElements(node.parentElement);
-                    return true;
+                    node = createParentElement(node, 'SPAN');
+                    return node.classList = action['class'];
                 }
-                var i;
+
                 childNodes = node.childNodes;
                 for (i = 0; i<childNodes.length; i++) {
-                    downwards(childNodes[i], button);
+                    downwards(childNodes[i], action);
                 }
             }
+
+
 
             document.getElementsByTagName('NAV')[0].addEventListener('click', function(e) {
                 e.preventDefault();
 
-                var button = null;
-                if (e.target.classList.contains('b-bold'))
-                    button = "bold";
-                if (e.target.classList.contains('b-strong'))
-                    button = "strong";
-
-                if (!button)
-                    return;
-
-                var list = [],
-                    currentSelection = [],
-                    startParent, endParent
-                    range = selection.getRangeAt(0);
-
-
-                /*
-                 ------------------Build Selection--------------
-                 */
-
-
-                if (range.startContainer!=range.endContainer) {
-
-                    //Start Container
-                    current = range.startContainer;
-                    currentSelection.push({
-                        node: current,
-                        startOffset: range.startOffset
-                    });
-
-                    //Find Start Parent
-                    while (current.parentElement != range.commonAncestorContainer)
-                        current = current.parentElement;
-                    startParent = current;
-
-                    //End Container
-                    current = range.endContainer;
-                    currentSelection.push({
-                        node: current,
-                        endOffset: range.endOffset
-                    });
-
-                    //Find End Parent
-                    var sibling;
-                    while (current.parentElement != range.commonAncestorContainer)
-                        current = current.parentElement;
-                    endParent = current;
-
-                    //Build Parents Sideways
-                    current = startParent;
-                    while ((current.nextElementSibling) && (current.nextElementSibling != endParent)) {
-                        current = current.nextElementSibling;
-                        currentSelection.push({
-                            node: current
-                        });
-                    }
-
-                    //Build Right from start and up
-                    current = range.startContainer;
-                    while (current.parentElement != range.commonAncestorContainer) {
-                        sibling = current;
-                            while (sibling.nextSibling) {
-                                sibling = sibling.nextSibling;
-                                currentSelection.push({
-                                    node: sibling
-                                });
-                                console.log(sibling);
-
-                            }
-                        current = current.parentElement;
-                    }
-
-                    //Build Left from end and up
-                    current = range.endContainer;
-                    while (current.parentElement != range.commonAncestorContainer) {
-                        sibling = current;
-                        while (sibling.previousSibling) {
-                            sibling = sibling.previousSibling;
-                            currentSelection.push({
-                                node: sibling
-                            });
-                        }
-                        current = current.parentElement;
-                    }
-
-                } else {
-                    current = range.startContainer;
-                    currentSelection.push({
-                        node: current,
-                        startOffset: range.startOffset,
-                        endOffset: range.endOffset,
-                    });
+                var action = null;
+                if (e.target.dataset['action']) {
+                    if (actions[e.target.dataset['action']])
+                        action = actions[e.target.dataset['action']];
                 }
 
-                /*
-                 ----------- Apply Bold  ----------------
-                 */
-                console.log(currentSelection);
+                if (!action)
+                    return;
+
+
+
+                var range = selection.getRangeAt(0);
+                var currentSelection = buildSelection(range);
+
+                /*//does action exist
+                var exists = false;
+
+                //not optimized at all
                 currentSelection.forEach(function(current) {
-                    downwards(current.node, button, current.startOffset, current.endOffset);
+                    if (current.node.classList.contains(action['class']))
+                        exists = true;
+                });
+
+                if (exists) {
+                    action.negate = true;
+                }*/
+                currentSelection.forEach(function(current) {
+                    downwards(current.node, action, current.startOffset, current.endOffset);
                 });
 
             });
