@@ -4,7 +4,7 @@
         <title>Editor</title>
         <meta charset="utf-8" />
         <style type="text/css">
-            h1, h2, strong {
+            h1, h2, h3, strong {
                 font-weight: inherit;
             }
             .bold {
@@ -12,6 +12,9 @@
             }
             .nobold {
                 font-weight: normal;
+            }
+            .italic {
+                font-style:italic;
             }
             .red {
                 color: red;
@@ -25,13 +28,15 @@
     <body>
         <nav>
             <a href="" class="b-bold" data-action="bold">Bold</a>
-            <a href="" class="b-strong" data-action="strong">Remove</a>
+            <a href="" class="b-strong" data-action="italic">Italic</a>
         </nav>
         <main>
             <h1>Editor Test</h1>
             <p class="test">By: Adam Dally</p>
+            <p>Click and type to edit.</p>
             <h2>Hello <strong>World</strong></h2>
             <p>Red Green <strong>Blue</strong> Yellow</p>
+            <h3>I AM UNEDITABLE, MUAHHH</h3>
             <p>Click and type to edit.</p>
         </main>
         <script type="text/javascript">
@@ -43,8 +48,16 @@
                 inlineElements = ['SPAN', 'STRONG'];
 
             var actions = {
+                'input' : {
+                    'restricted': ['H3'],
+                },
+                'italic': {
+                    'class': 'italic',
+                    'restricted': ['H3'],
+                },
                 'bold': {
                     'class': 'bold',
+                    'restricted': ['H3'],
                 },
                 'strong':  {
                     'class': '',
@@ -54,8 +67,70 @@
             var range;
             var selection = window.getSelection();
             var current, start, end;
+            var editable = true;
             el.addEventListener('mouseup', function(e) {
-                selection = window.getSelection();
+                range = selection.getRangeAt(0);
+                if (isRestricted(range.startContainer, actions.input))
+                    editable = false;
+                else
+                    editable = true;
+            });
+
+            el.addEventListener('paste', function(e) {
+                if (!editable)
+                    e.preventDefault();
+            });
+
+            el.addEventListener('keypress', function(e) {
+                //Allow ctrl key compbinations, could be used in the future to access actions
+                if (e.ctrlKey)
+                    return true;
+
+                //If an arrow key is not pressed and editable is false
+                //Then prevent keypress
+                if ([37,38,39,40].indexOf(e.keyCode)==-1 && !editable)
+                    return e.preventDefault();
+
+                //if backspace or delete aren't pressed then return;
+                if ([8,46].indexOf(e.keyCode)==-1)
+                    return;
+
+                //check to verify backspace or delete aren't moving into a restricted element
+                var range = selection.getRangeAt(0),
+                    current,
+                    siblingNode;
+
+                if (e.keyCode == 8 && range.startOffset==0) {
+                    current = range.startContainer;
+                    siblingNode = current.previousElementSibling;
+                    while (!siblingNode || !current) {
+                        current = current.parentElement;
+                        siblingNode = current.previousElementSibling;
+                    }
+                }
+                if (e.keyCode == 46 && range.startOffset==range.startContainer.length) {
+                    current = range.startContainer;
+                    siblingNode = current.nextElementSibling;
+
+                    while (!siblingNode || current.tagName == "MAIN") {
+                        current = current.parentElement;
+                        siblingNode = current.nextElementSibling;
+                    }
+                }
+                if (siblingNode && isRestricted(siblingNode, actions.input))
+                    e.preventDefault();
+            });
+
+            el.addEventListener('keyup', function(e) {
+                //On keys that could move the cursor out of its current position check isRestricted
+                if ([37,38,39,40].indexOf(e.keyCode)!=-1) {
+                    range = selection.getRangeAt(0);
+                    if (isRestricted(range.startContainer, actions.input))
+                        editable = false;
+                    else
+                        editable = true;
+                }
+
             });
 
             function joinAdjacentElements(element) {
@@ -117,16 +192,40 @@
                 node.appendChild(element);
             }
 
-            function downwards(node, action, startOffset, endOffset) {
-                var i, childNodes;
+            function isRestricted(node, action) {
+                var current;
+                if (action.restricted){
+                    current = node;
+                    while (current.tagName != "MAIN") {
+                        if (action.restricted.indexOf(current.tagName) != -1)
+                            return true;
+                        current = current.parentElement;
+                    }
+                }
+                return false;
+            }
+            function apply(node, action) {
+                if (action.negate)
+                    return node.classList.toggle(action['class'], false);
+                else
+                    return node.classList.toggle(action['class'], true);
+            }
+
+            function downwards(node, action, startOffset, endOffset, parents) {
+                console.log(parents);
+                var i, childNodes, current;
+
+                if (isRestricted(node, action))
+                    return false;
 
                 if (blockElements.indexOf(node.tagName) != -1)
-                     return node.classList = action['class'];
+                    return apply(node, action);
 
                 if (inlineElements.indexOf(node.tagName) != -1)
-                    return node.classList = action['class'];
+                    return apply(node, action);
 
                 if (node.nodeType ==3 && node.nodeValue.trim())  {
+
                     var parent = node.parentElement;
 
                     if (startOffset)
@@ -138,9 +237,15 @@
                     return node.classList = action['class'];
                 }
 
-                childNodes = node.childNodes;
-                for (i = 0; i<childNodes.length; i++) {
-                    downwards(childNodes[i], action);
+                children = node.children;
+                parents.push(node.tagName);
+                console.log(children);
+                console.log(node);
+                console.log(parents);
+                if (children) {
+                    for (i = 0; i<children.length; i++) {
+                        downwards(children[i], action, false, false, parents);
+                    }
                 }
             }
 
@@ -150,6 +255,8 @@
                 e.preventDefault();
 
                 var action = null;
+                var i = 0;
+
                 if (e.target.dataset['action']) {
                     if (actions[e.target.dataset['action']])
                         action = actions[e.target.dataset['action']];
@@ -163,21 +270,40 @@
                 var range = selection.getRangeAt(0);
                 var currentSelection = buildSelection(range);
 
-                /*//does action exist
-                var exists = false;
+                console.log(currentSelection);
 
-                //not optimized at all
-                currentSelection.forEach(function(current) {
-                    if (current.node.classList.contains(action['class']))
-                        exists = true;
-                });
+                //determine if action needs to be negated
+                //no elements can contain class, and also can not be inside of class
+                action.negate = false;
+                while (action.negate == false && i<currentSelection.length) {
+                    current = currentSelection[i].node;
+                    if (current.nodeType == 1 && current.classList.contains(action.class)) {
+                        action.negate = true;
+                        break;
+                    }
+                    if (current.nodeType==1 && current.getElementsByClassName(action.class).length) {
+                        action.negate = true;
+                        break;
+                    }
+                    if (current.nodeType == 3) {
+                        current= current.parentElement;
+                        while (current.tagName != "MAIN") {
+                            console.log(current);
+                            if (current.classList.contains(action.class)) {
+                                action.negate = true;
+                                break;
+                            }
+                            current = current.parentElement;
+                        }
+                    }
+                    i++;
+                }
+                console.log(action);
 
-                if (exists) {
-                    action.negate = true;
-                }*/
                 currentSelection.forEach(function(current) {
-                    downwards(current.node, action, current.startOffset, current.endOffset);
+                    downwards(current.node, action, current.startOffset, current.endOffset, []);
                 });
+                return false;
 
             });
 

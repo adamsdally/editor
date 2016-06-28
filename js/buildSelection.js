@@ -8,11 +8,18 @@ function buildSelection(range) {
 
     //Are we dealing within a single node?
     if (range.startContainer == range.endContainer) {
-        currentSelection.push({
-            node:range.startContainer,
-            startOffset: range.startOffset,
-            endOffset: range.endOffset
-        });
+        //Are we dealing with a whole element?
+        if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
+            currentSelection.push({
+                node:range.startContainer.parentElement,
+            });
+        } else {
+            currentSelection.push({
+                node:range.startContainer,
+                startOffset: range.startOffset,
+                endOffset: range.endOffset
+            });
+        }
         return currentSelection;
     }
 
