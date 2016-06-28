@@ -16,6 +16,9 @@
             .italic {
                 font-style:italic;
             }
+            .blueBorder {
+                border:1px solid blue;
+            }
             .red {
                 color: red;
             }
@@ -24,19 +27,22 @@
             }
         </style>
         <script type="text/javascript" src="js/buildSelection.js"></script>
+        <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
         <nav>
             <a href="" class="b-bold" data-action="bold">Bold</a>
             <a href="" class="b-strong" data-action="italic">Italic</a>
+            <!--<a href="" data-action="blueBorder">Blue Border</a>-->
         </nav>
+        <p><a class="dragging">Dragging Off</a></p>
         <main>
             <h1>Editor Test</h1>
             <p class="test">By: Adam Dally</p>
             <p>Click and type to edit.</p>
             <h2>Hello <strong>World</strong></h2>
             <p>Red Green <strong>Blue</strong> Yellow</p>
-            <h3>I AM UNEDITABLE, MUAHHH</h3>
+            <h3>I AM UNEDITABLE, MUAHHH (but you can drag me)</h3>
             <p>Click and type to edit.</p>
         </main>
         <script type="text/javascript">
@@ -59,6 +65,9 @@
                     'class': 'bold',
                     'restricted': ['H3'],
                 },
+                'blueBorder': {
+                    'class': 'blueBorder',
+                },
                 'strong':  {
                     'class': '',
                 },
@@ -68,6 +77,16 @@
             var selection = window.getSelection();
             var current, start, end;
             var editable = true;
+            var draggable = false;
+            document.getElementsByClassName('dragging')[0].addEventListener('click', function(e) {
+                draggable = !draggable;
+                el.contentEditable = !draggable;
+                if (draggable) {
+                    e.target.innerHTML = "Dragging On";
+                } else {
+                    e.target.innerHTML = "Dragging Off";
+                }
+            });
             el.addEventListener('mouseup', function(e) {
                 range = selection.getRangeAt(0);
                 if (isRestricted(range.startContainer, actions.input))
@@ -82,6 +101,7 @@
             });
 
             el.addEventListener('keypress', function(e) {
+                draggable = false;
                 //Allow ctrl key compbinations, could be used in the future to access actions
                 if (e.ctrlKey)
                     return true;
@@ -306,7 +326,7 @@
                 return false;
 
             });
-
+            Sortable.create(el); // That's all.
 
 
         </script>
