@@ -1,18 +1,60 @@
 function buildSelection(range) {
+    console.log("..........Range.......");
+    console.log(range);
     var currentSelection = [],
         startSelection = [],
         endSelection = [],
         startParent,
         endParent;
 
+    //All ranges should preferrably end up in text nodes
+
+    //If we're at end of startContainer then fix:
+    if (range.startContainer.length == range.startOffset) {
+        console.log("...at end of start");
+        if (range.startContainer.nextSibling)
+           next= range.startContainer.nextSibling;
+        else
+            next = range.startContainer.parentElement.nextSibling;
+        while (next.firstChild) {
+            next = next.firstChild;
+        }
+        console.log(next);
+        console.log(next.length);
+        range.setStart(next, 0);
+        console.log(range);
+    }
+    //If we're at the start of the endContainer then fix:
+    if (range.endOffset == 0) {
+        console.log("...at beginning of end");
+        if (range.endContainer.previousSibling)
+            previous = range.endContainer.previousSibling;
+        else
+            previous = range.endContainer.parentElement.previousSibling;
+        while (previous.lastChild) {
+            previous = previous.lastChild;
+        }
+        console.log(previous);
+        console.log(previous.innerHTML);
+        console.log(previous.length);
+        range.setEnd(previous, previous.length);
+        console.log(range);
+    }
+
 
     //Are we dealing within a single node?
     if (range.startContainer == range.endContainer) {
-        //Are we dealing with a whole element?
+        //Are we dealing with a whole node?
         if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
-            currentSelection.push({
-                node:range.startContainer.parentElement,
-            });
+            //Does the parentElement have 1 child, self
+            if (range.startContainer.parentElement.childNodes.length == 1)
+                currentSelection.push({
+                    node:range.startContainer.parentElement,
+                });
+            else
+                currentSelection.push({
+                    node:range.startContainer
+                });
         } else {
             currentSelection.push({
                 node:range.startContainer,
@@ -34,10 +76,12 @@ function buildSelection(range) {
     //Build start alternating right then up until startParent is reached
     current = range.startContainer;
     if (range.startOffset){
-        startSelection.push({
-            node: current,
-            startOffset: range.startOffset
-        });
+        if (current.length > range.startOffset) {
+            startSelection.push({
+                node: current,
+                startOffset: range.startOffset
+            });
+        }
         if (current.nextSibling)
             current= current.nextSibling;
         else

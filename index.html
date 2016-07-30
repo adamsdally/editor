@@ -4,6 +4,9 @@
         <title>Editor</title>
         <meta charset="utf-8" />
         <style type="text/css">
+            main {
+                font-size:2em;
+            }
             h1, h2, h3, strong {
                 font-weight: inherit;
             }
@@ -25,8 +28,15 @@
             strong {
                 color: blue;
             }
+            article {
+                margin:20px;
+                padding:20px;
+                border:1px solid black;
+            }
         </style>
         <script type="text/javascript" src="js/buildSelection.js"></script>
+        <script type="text/javascript" src="js/isActionable.js"></script>
+        <script type="text/javascript" src="js/getApplyableElementsInParent.js"></script>
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
@@ -35,16 +45,19 @@
             <a href="" class="b-strong" data-action="italic">Italic</a>
             <!--<a href="" data-action="blueBorder">Blue Border</a>-->
         </nav>
-        <p><a class="dragging">Dragging Off</a></p>
-        <main>
-            <h1>Editor Test</h1>
+        <!--<p><a class="dragging">Dragging Off</a></p>-->
+            <!--<h1>Editor Test</h1>
             <p class="test">By: Adam Dally</p>
             <p>Click and type to edit.</p>
             <h2>Hello <strong>World</strong></h2>
             <p>Red Green <strong>Blue</strong> Yellow</p>
             <h3>I AM UNEDITABLE, MUAHHH (but you can drag me)</h3>
-            <p>Click and type to edit.</p>
+            <p>Click and type to edit.</p>-->
+        <main>
+            <p>AdamDally</p>
         </main>
+        <article>
+        </article>
         <script type="text/javascript">
             //Setup
             el = document.getElementsByTagName('main')[0];
@@ -73,12 +86,17 @@
                 },
             };
 
+
+            function htmlEncode( input ) {
+                return String(input).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, "'").replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
             var range;
             var selection = window.getSelection();
             var current, start, end;
             var editable = true;
             var draggable = false;
-            document.getElementsByClassName('dragging')[0].addEventListener('click', function(e) {
+            /*document.getElementsByClassName('dragging')[0].addEventListener('click', function(e) {
                 draggable = !draggable;
                 el.contentEditable = !draggable;
                 if (draggable) {
@@ -86,13 +104,14 @@
                 } else {
                     e.target.innerHTML = "Dragging Off";
                 }
-            });
+            });*/
             el.addEventListener('mouseup', function(e) {
                 range = selection.getRangeAt(0);
                 if (isRestricted(range.startContainer, actions.input))
                     editable = false;
                 else
                     editable = true;
+                console.log(range);
             });
 
             el.addEventListener('paste', function(e) {
@@ -224,16 +243,59 @@
                 }
                 return false;
             }
+
+            //-------------------------
+            //-----Appy----------------
+            //-------------------------
             function apply(node, action) {
-                if (action.negate)
-                    return node.classList.toggle(action['class'], false);
-                else
-                    return node.classList.toggle(action['class'], true);
+                console.log("Applying:");
+                console.log(""+node.innerHTML);
+                console.log(JSON.stringify(action));
+                var elements,
+                    i,
+                    parent,
+                    remove;
+                if (action.negate) {
+                    node.classList.toggle(action['class'], false);
+                    if (blockElements.indexOf(node.tagName)>=0) {
+                        remove = true;
+                        while(remove) {
+                            elements = node.getElementsByClassName(action.class);
+                            if (elements[0])
+                                apply(elements[0], action);
+                            else
+                                remove=false;
+                        }
+                    } else if (inlineElements.indexOf(node.tagName)>=0) {
+                        if (node.className == "") {
+                            parent = node.parentElement;
+                            while(node.firstChild) {
+                                node.parentElement.insertBefore(node.firstChild, node);
+                            }
+                            node.parentElement.removeChild(node);
+                            //do not normalize this, further stuff is done
+                        }
+                    }
+                    return l();
+                } else {
+                   node.classList.toggle(action['class'], true);
+                    return l();
+                }
             }
 
+            //------------------------
+            //-----Downwards----------
+            //------------------------
             function downwards(node, action, startOffset, endOffset, parents) {
-                console.log(parents);
-                var i, childNodes, current;
+                console.log("!!Downwards:");
+                console.log(node.innerHTML);
+                console.log(JSON.stringify(action));
+                /*if (parents.length) {
+                    console.log("Parents:");
+                    console.log(parents);
+                }*/
+                var i, childNodes, next, previous, current, action2;
+                var parent = node.parentElement;
 
                 if (isRestricted(node, action))
                     return false;
@@ -246,22 +308,90 @@
 
                 if (node.nodeType ==3 && node.nodeValue.trim())  {
 
-                    var parent = node.parentElement;
-
-                    if (startOffset)
+                    //The end needs to be trimmed first so that the offsets aren't messed up
+                    if (endOffset && node.length > endOffset){
+                        node.splitText(endOffset);
+                        next = node.nextSibling;
+                    }
+                    if (startOffset) {
                         node = node.splitText(startOffset);
-                    if (endOffset && node.length > endOffset)
-                        node.splitText(endOffset-1);
+                        previous = node.previousSibling;
+                    }
 
-                    node = createParentElement(node, 'SPAN');
-                    return node.classList = action['class'];
+                    if (action.negate) {
+                        current = node;
+                        action2 = JSON.parse(JSON.stringify(action));
+                        //As long as the current element is not a block on then do this thing
+                        //but negate has to be true
+                        console.log("Should I clear block?");
+                        while (action2.negate && blockElements.indexOf(current.tagName) == -1) {
+                            console.log("try");
+                            console.log(JSON.stringify(current));
+                            current=current.parentElement;
+
+                            if (current.classList.contains(action.class)) {
+                                console.log("!clear block");
+                                apply(current, action);
+                                action2.negate = false;
+                            }
+
+                        }
+                        console.log("Action 2, next, previous:");
+                        console.log(JSON.stringify(action2));
+                        console.log(JSON.stringify(next));
+                        console.log(JSON.stringify(previous));
+                        if (!action2.negate) {
+                            if (next) {
+                                console.log("nexting");
+                                nextNode = createParentElement(next, 'SPAN');
+                                apply(nextNode, action2);
+                            }
+                            if (previous) {
+                                console.log("previousing");
+                                previousNode = createParentElement(previous, 'SPAN');
+                                apply(previousNode, action2);
+                            }
+                        }
+                    } else {
+                        var nextGo = false;
+                        var previousGo = false;
+                        if (node.nextSibling && node.nextSibling.nodeType != 3)
+                            nextGo = (node.nextElementSibling.className == action.class);
+                        if (node.previousSibling && node.previousSibling.nodeType != 3)
+                            previousGo = (node.previousElementSibling.className == action.class);
+
+                        console.log(JSON.stringify(node));
+                        if (nextGo && !previousGo ) {
+                            var next = node.nextElementSibling;
+                            next.insertBefore(node, next.firstChild);
+                        } else if (!nextGo && previousGo) {
+                            var previous = node.previousElementSibling;
+                            previous.insertBefore(node, null);
+                        } else if (nextGo && previousGo) {
+                            var previous = node.previousElementSibling;
+                            var next = node.nextElementSibling;
+                            previous.insertBefore(node, null);
+                            previous.insertBefore(next.firstChild, null);
+                            previous.parentElement.removeChild(next);
+                        } else {
+                            node = createParentElement(node, 'SPAN');
+                            apply(node, action);
+                        }
+
+
+                        parent.normalize();
+                        inner = parent.firstChild;
+                        if (parent.childNodes.length == 1) {
+                            parent.className = inner.className;
+                            parent.insertBefore(inner.firstChild, null);
+                            parent.removeChild(inner);
+                        }
+                    }
                 }
 
                 children = node.children;
                 parents.push(node.tagName);
-                console.log(children);
-                console.log(node);
-                console.log(parents);
+                l();
                 if (children) {
                     for (i = 0; i<children.length; i++) {
                         downwards(children[i], action, false, false, parents);
@@ -272,8 +402,12 @@
 
 
             document.getElementsByTagName('NAV')[0].addEventListener('click', function(e) {
+                console.log("===============Click====================");
+                console.log("========================================");
+                old = document.getElementsByTagName('article')[0].innerHTML;
+                document.getElementsByTagName('article')[0].innerHTML = '<p>------------------------</p>'+old;
                 e.preventDefault();
-
+                //document.getElementsByTagName('article')[0].innerHTML ="";
                 var action = null;
                 var i = 0;
 
@@ -290,6 +424,7 @@
                 var range = selection.getRangeAt(0);
                 var currentSelection = buildSelection(range);
 
+
                 console.log(currentSelection);
 
                 //determine if action needs to be negated
@@ -297,6 +432,8 @@
                 action.negate = false;
                 while (action.negate == false && i<currentSelection.length) {
                     current = currentSelection[i].node;
+                    console.log("!Trying to negate");
+                    console.log(JSON.stringify(current));
                     if (current.nodeType == 1 && current.classList.contains(action.class)) {
                         action.negate = true;
                         break;
@@ -308,7 +445,6 @@
                     if (current.nodeType == 3) {
                         current= current.parentElement;
                         while (current.tagName != "MAIN") {
-                            console.log(current);
                             if (current.classList.contains(action.class)) {
                                 action.negate = true;
                                 break;
@@ -318,16 +454,28 @@
                     }
                     i++;
                 }
-                console.log(action);
+                console.log(action.negate);
+
 
                 currentSelection.forEach(function(current) {
+                    console.log("++++++++++++Current++++++++++++++++");
+                    console.log(current);
+
                     downwards(current.node, action, current.startOffset, current.endOffset, []);
+                    current.node.normalize();
+                    console.log(current);
                 });
+                console.log("cSel repeat");
+                console.log(JSON.stringify(currentSelection));
                 return false;
 
             });
-            Sortable.create(el); // That's all.
-
+            //Sortable.create(el); // That's all.
+            function l() {
+                old = document.getElementsByTagName('article')[0].innerHTML;
+                document.getElementsByTagName('article')[0].innerHTML = '<p>'+htmlEncode(el.innerHTML)+'</p>'+old;
+                console.log("l------------------");
+            }
 
         </script>
     </body>
