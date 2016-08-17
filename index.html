@@ -50,6 +50,11 @@
                 <option value="16px">16px</option>
                 <option value="48px">48px</option>
             </select>
+            <select data-action="font-family" name="font-family">
+                <option value=""></option>
+                <option value="Arial">Arial</option>
+                <option value="Lucida Console">Lucida Console</option>
+            </select>
             <!--<a href="" data-action="blueBorder">Blue Border</a>-->
         </nav>
         <!--<p><a class="dragging">Dragging Off</a></p>-->
@@ -86,6 +91,10 @@
                 },
                 'font-size': {
                     'attribute': 'font-size',
+                    'input': 'select',
+                },
+                'font-family': {
+                    'attribute': 'font-family',
                     'input': 'select',
                 },
                 'blueBorder': {
@@ -257,6 +266,7 @@
                 return false;
             }
 
+            var joinx = 0;
             //------------------------
             //-----Reset Controls-----
             //------------------------
@@ -269,6 +279,7 @@
                     valueActions = [],
                     current,
                     part = null;
+                joinx = 0;
 
                 //Look through each select element and build a list of actions we need to determine.
                 elements = controlsEl.getElementsByTagName('SELECT');
@@ -278,27 +289,27 @@
                         valueAction.element = elements[i];
                         valueAction.value = null;
                         valueActions.push(valueAction);
-                    } else {
-                        continue;
                     }
                 }
 
+                //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
+                defaultValueActions = JSON.parse(JSON.stringify(valueActions));
                 for (i=0; i<currentSelection.length; i++) {
+                    console.log("{{Next Node}}");
                     current = currentSelection[i];
+                    console.log(current);
                     if (current.startOffset || current.endOffset && current.node.length > current.endOffset)
                         part = true;
                     else
                         part = false;
-                    console.log("jjjjjjjjjjjjjjjj");
-                    console.log(JSON.stringify(valueActions));
-                    valueActions = joinValues(valueActions, determineValues(current.node, valueActions, part));
-                    console.log(JSON.stringify(valueActions));
+                    joinValues(valueActions, determineValues(current.node, JSON.parse(JSON.stringify(defaultValueActions)), part));
                 }
 
+                //Set controls based on values.
                 for (i=0; i < valueActions.length; i++) {
                     valueAction = valueActions[i];
                     if (valueAction.value==null)
-                        continue;
+                        valueAction.value="";
                     for(x = 0; x < valueAction.element.options.length; ++x) {
                         if(valueAction.element.options[x].value === valueAction.value) {
                             valueAction.element.selectedIndex = x;
@@ -311,79 +322,59 @@
             //-------------------------
             //-----Join Values---------
             //-------------------------
+            //valueActionsOne and valueActionsTwo are passed by reference
             function joinValues(valueActionsOne, valueActionsTwo) {
+                console.log("### Join Values ###");
+                console.log(joinx++);
                 var i = 0;
                 for (i =0; i< valueActionsOne.length; i++) {
-                    console.log(valueActionsOne[i].value);
-                    console.log(valueActionsTwo[i].value);
                     if (valueActionsOne[i].value == null && valueActionsTwo[i].value!=null)
                         valueActionsOne[i].value = valueActionsTwo[i].value;
                     if (valueActionsOne[i].value != valueActionsTwo[i].value)
                         valueActionsOne[i].value = "";
                 }
-                return valueActionsOne;
             }
 
             //-------------------------
             //-----Determine Values----
             //-------------------------
+            //valueActions is currently passed by reference as a clone in the function call, still needs to be returned
             function determineValues(node, valueActions, part) {
+                console.log("Determing")
                 console.log(node);
                 var children,
                     i = 0,
-                    oldValueActions;
+                    oldValueActions,
+                    join = false;
 
                 if (node.nodeType == 1) {
-                    console.log("1");
                     for (i=0; i<valueActions.length; i++) {
-                        console.log(valueActions[i]);
-                        if (valueActions[i].attribute) {
-                            console.log("we have one");
-                            if (node.style[valueActions[i].attribute]) {
-                                console.log(node.style[valueActions[i].attribute]);
-                                valueActions[i].value = node.style[valueActions[i].attribute];
-                            }
-                        } else {
-                            console.log("dont have one");
-                            valueActions[i].value = "";
-                        }
+                        if (valueActions[i].attribute && node.style[valueActions[i].attribute])
+                            valueActions[i].value = node.style[valueActions[i].attribute];
                     }
                 }
 
-
-
-                if (node.childNodes) {
-                    children = node.childNodes;
-                    for (i=0; i< children.length; i++) {
-                        valueActions = joinValues(valueActions, determineValues(children[i], valueActions, false));
-                    }
-                }
-
-                console.log(JSON.stringify(valueActions));
                 if (part) {
+                    console.log("Entering Part");
                     while (blockElements.indexOf(node.tagName) == -1) {
-                        oldValueActions = JSON.parse(JSON.stringify(valueActions));
-                        console.log(JSON.stringify(valueActions));
-                        console.log(JSON.stringify(oldValueActions));
+                        newValueActions = JSON.parse(JSON.stringify(valueActions));
                         node = node.parentElement;
-                        for (i=0; i<valueActions.length; i++) {
-                            if (valueActions[i].attribute) {
-                                console.log("we have one");
-                                console.log(node.style[valueActions[i].attribute]);
-                                if (node.style[valueActions[i].attribute]) {
-                                    console.log(node.style[valueActions[i].attribute]);
-                                    valueActions[i].value = node.style[valueActions[i].attribute];
-                                }
+                        join = false;
+                        for (i=0; i<newValueActions.length; i++) {
+                            if (newValueActions[i].attribute && node.style[newValueActions[i].attribute]) {
+                                join = true;
+                                newValueActions[i].value = node.style[newValueActions[i].attribute];
                             }
                         }
 
-                        console.log(JSON.stringify(oldValueActions));
-                        console.log(JSON.stringify(valueActions));
-                        valueActions = joinValues(oldValueActions, valueActions);
-                        console.log(JSON.stringify(valueActions));
+                        if (join)
+                            joinValues(valueActions, newValueActions);
+                    }
+                    for (i=0; i<valueActions.length; i++) {
+                        if (valueActions[i].value == null)
+                            valueActions[i].value= "";
                     }
                 }
-
                 return valueActions;
             }
 
