@@ -199,12 +199,12 @@
                 var movingInside;
                 var movingOutside;
 
-                if (previous && previous.nodeType==1 && previous.tagName == element.tagName && previous.className == element.className) {
+                if (previous && previous.nodeType==1 && previous.tagName == element.tagName && previous.className == element.className && previous.style == element.style) {
                     previous.innerHTML += element.innerHTML;
                     parent.removeChild(element);
                     element = previous;
                 }
-                if (next && next.nodeType==1 && next.tagName == element.tagName && next.className == element.className) {
+                if (next && next.nodeType==1 && next.tagName == element.tagName && next.className == element.className && next.style == element.style) {
                     element.innerHTML += next.innerHTML;
                     parent.removeChild(next);
                 }
@@ -391,17 +391,23 @@
                     parent,
                     remove;
                 if (action.negate) {
-                    node.classList.toggle(action['class'], false);
+                    if (action.input) {
+                        console.log("Negating an input");
+                        node.style[action.attribute] =  action.value;
+                    } else
+                        node.classList.toggle(action['class'], false);
                     if (blockElements.indexOf(node.tagName)>=0) {
                         remove = true;
                         while(remove) {
                             elements = node.getElementsByClassName(action.class);
+                            console.log("NOT CHECKING FOR ATTRIBUTES");
                             if (elements[0])
                                 apply(elements[0], action);
                             else
                                 remove=false;
                         }
                     } else if (inlineElements.indexOf(node.tagName)>=0) {
+                        console.log("NOT CHECKING FOR ATTRIBUTES");
                         if (node.className == "") {
                             parent = node.parentElement;
                             while(node.firstChild) {
@@ -413,11 +419,10 @@
                     }
                     return l();
                 } else {
-                    if (action.input) {
+                    if (action.input)
                         node.style[action.attribute] =  action.value;
-                    } else {
+                    else
                         node.classList.toggle(action['class'], true);
-                    }
                     return l();
                 }
             }
@@ -468,7 +473,7 @@
                             console.log(JSON.stringify(current));
                             current=current.parentElement;
 
-                            if (current.classList.contains(action.class)) {
+                            if (hasProperty(current, action)) {
                                 console.log("!clear block");
                                 apply(current, action);
                                 action2.negate = false;
@@ -540,6 +545,22 @@
             }
 
             //------------------------
+            //-----Has Property---------
+            //------------------------
+            function hasProperty(current, action, children) {
+                if (action.input) {
+                    if (current.style[action.attribute])
+                        return true;
+                } else {
+                    if (current.classList.contains(action.class))
+                        return true;
+                    if (children && current.getElementsByClassName(action.class).length)
+                        return true;
+                }
+                return false;
+            }
+
+            //------------------------
             //-----Perform------------
             //------------------------
             function perform(action) {
@@ -551,30 +572,24 @@
                     console.log(currentSelection);
 
                 //determine if action needs to be negated
-                //no elements can contain class, and also can not be inside of class
+                //no elements can contain class or attribute, and also can not be inside of class or attribute
                 action.negate = false;
                 while (action.negate == false && i<currentSelection.length) {
                     current = currentSelection[i].node;
                     console.log("!Trying to negate");
                     console.log(JSON.stringify(current));
-                    if (current.nodeType == 1 && current.classList.contains(action.class)) {
-                        action.negate = true;
-                        break;
-                    }
-                    if (current.nodeType==1 && current.getElementsByClassName(action.class).length) {
-                        action.negate = true;
-                        break;
-                    }
+
+                    if (current.nodeType == 1)
+                        action.negate = hasProperty(current, action, true);
+
                     if (current.nodeType == 3) {
                         current= current.parentElement;
                         while (current.tagName != "MAIN") {
-                            if (current.classList.contains(action.class)) {
-                                action.negate = true;
-                                break;
-                            }
+                            action.negate = hasProperty(current, action, false);
                             current = current.parentElement;
                         }
                     }
+
                     i++;
                 }
                 console.log(action.negate);
