@@ -316,7 +316,7 @@ EditorPrototype.downwards = function(node, action, startOffset, endOffset, paren
     this.l();
     if (children) {
         for (i = 0; i<children.length; i++) {
-            downwards(children[i], action, false, false, parents);
+            this.downwards(children[i], action, false, false, parents);
         }
     }
 }

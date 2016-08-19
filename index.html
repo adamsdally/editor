@@ -4,29 +4,14 @@
         <title>Editor</title>
         <meta charset="utf-8" />
         <style type="text/css">
-            main {
-                font-size:2em;
-            }
             h1, h2, h3, strong {
                 font-weight: inherit;
             }
             .bold {
                 font-weight: bold;
             }
-            .nobold {
-                font-weight: normal;
-            }
             .italic {
                 font-style:italic;
-            }
-            .blueBorder {
-                border:1px solid blue;
-            }
-            .red {
-                color: red;
-            }
-            strong {
-                color: blue;
             }
             article {
                 margin:20px;
@@ -42,8 +27,10 @@
         <script type="text/javascript" src="js/internal.js"></script>
         <script type="text/javascript" src="js/external.js"></script>
         <script type="text/javascript" src="js/editor.js"></script>
-
         <script type="text/javascript" src="js/getApplyableElementsInParent.js"></script>
+
+
+        <!--<script type="text/javascript" src="editor.min.js"></script>-->
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
@@ -52,34 +39,48 @@
             <a href="" class="b-strong" data-action="italic">Italic</a>
             <select data-action="font-size" name="font-size">
                 <option value=""></option>
+                <option value="12px">12px</option>
                 <option value="16px">16px</option>
+                <option value="20px">20px</option>
+                <option value="24px">24px</option>
+                <option value="28px">28px</option>
+                <option value="32px">32px</option>
+                <option value="36px">36px</option>
+                <option value="40px">40px</option>
+                <option value="44px">44px</option>
                 <option value="48px">48px</option>
+                <option value="52px">52px</option>
+                <option value="56px">56px</option>
+                <option value="60px">60px</option>
+                <option value="64px">64px</option>
             </select>
             <select data-action="font-family" name="font-family">
                 <option value=""></option>
                 <option value="Arial">Arial</option>
+                <option value="Comic Sans MS">Comic Sans MS</option>
+                <option value="Times New Roman">Times New Roman</option>
                 <option value="Lucida Console">Lucida Console</option>
+                <option value="Impact">Impact</option>
             </select>
             <select data-action="color" name="color">
                 <option value=""></option>
                 <option value="black">Black</option>
                 <option value="blue">Blue</option>
                 <option value="red">Red</option>
+                <option value="green">Green</option>
+                <option value="yellow">Yellow</option>
             </select>
             <!--<a href="" data-action="blueBorder">Blue Border</a>-->
         </nav>
-        <!--<p><a class="dragging">Dragging Off</a></p>-->
-            <!--<h1>Editor Test</h1>
-            <p class="test">By: Adam Dally</p>
-            <p>Click and type to edit.</p>
-            <h2>Hello <strong>World</strong></h2>
-            <p>Red Green <strong>Blue</strong> Yellow</p>
-            <h3>I AM UNEDITABLE, MUAHHH (but you can drag me)</h3>
-            <p>Click and type to edit.</p>-->
         <main>
-            <p>Adam<span style="font-size:48px">Dally</span></p>
-            <p>Rachel Krieg</p>
-            <h3>Laptop</h3>
+            <h1>Editor by Adam Dally</h1>
+            <p class="italic">Last updated: August 18, 2016</p>
+            <p>This editor is being designed to provide the most accessible way to extend editing
+                functionality via classes, css style properties, and more, along with fine tuned
+                control on what can be edited by what. For instance, you can not change the
+                size of the this documents title but can for everything else :)
+            </p>
+            <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>
         </main>
         <script type="text/javascript">
         'use strict';
@@ -90,22 +91,21 @@
 
             el.contentEditable = true;
 
-            var blockElements = ['H1', 'H2', 'P'],
-                inlineElements = ['SPAN', 'STRONG'];
+            var blockElements = ['H1', 'P',],
+                inlineElements = ['SPAN'];
 
             var actions = {
                 'input' : {
-                    'restricted': ['H3'],
+                    'restricted': ['H1'],
                 },
                 'italic': {
                     'class': 'italic',
-                    'restricted': ['H3'],
                 },
                 'bold': {
                     'class': 'bold',
-                    'restricted': ['H3'],
                 },
                 'font-size': {
+                    'restricted': ['H1'],
                     'attribute': 'font-size',
                     'input': 'select',
                 },
@@ -117,14 +117,7 @@
                     'attribute': 'color',
                     'input': 'select',
                 },
-                'blueBorder': {
-                    'class': 'blueBorder',
-                },
-                'strong':  {
-                    'class': '',
-                },
             };
-
 
             //Sortable.create(el); // That's all.
 
