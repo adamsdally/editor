@@ -9,15 +9,15 @@ var joinx = 0;
 //------------------------
 EditorPrototype.l = function (title) {
     var old;
+
     if (!this.config.debug)
         return false;
 
     if (title) {
         console.log("=============="+title+"================");
         console.log("===================================");
-    } else {
+    } else
         console.log("l------------------");
-    }
 
     old = document.getElementsByTagName('article')[0].innerHTML;
     document.getElementsByTagName('article')[0].innerHTML = '<p>'+this.htmlEncode(this.el.innerHTML)+'</p>'+old;
@@ -27,11 +27,10 @@ EditorPrototype.l = function (title) {
 //-----Is Restricted-----
 //------------------------
 EditorPrototype.isRestricted = function(node, action) {
-    var current;
+    var current = node;
 
     //this is for test purposes.
-    if (action.restricted){
-        current = node;
+    if (current && action.restricted){
         while (current.tagName != "MAIN") {
             if (action.restricted.indexOf(current.tagName) != -1)
                 return true;
@@ -45,9 +44,10 @@ EditorPrototype.isRestricted = function(node, action) {
 //-----Reset Controls-----
 //------------------------
 EditorPrototype.resetControls = function() {
+    this.l("Reset Controls");
     var range = this.selection.getRangeAt(0),
-        currentSelection = buildSelection(range),
         elements = null,
+        currentSelection = buildSelection(range),
         i = 0,
         x = 0,
         valueAction = null,
@@ -56,6 +56,8 @@ EditorPrototype.resetControls = function() {
         part = null,
         defaultValueActions;
     joinx = 0;
+
+    console.log(currentSelection);
 
     //Look through each select element and build a list of actions we need to determine.
     elements = this.controlsEl.getElementsByTagName('SELECT');
@@ -71,9 +73,10 @@ EditorPrototype.resetControls = function() {
     //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
     defaultValueActions = JSON.parse(JSON.stringify(valueActions));
     for (i=0; i<currentSelection.length; i++) {
-        console.log("{{Next Node}}");
         current = currentSelection[i];
-        console.log(current);
+        //Make sure this node is legit
+        if (!current.startOffset && !current.endOffset && current.node.nodeType == 3)
+            continue;
         if (current.startOffset || current.endOffset && current.node.length > current.endOffset)
             part = true;
         else
@@ -81,6 +84,7 @@ EditorPrototype.resetControls = function() {
         this.joinValues(valueActions, this.determineValues(current.node, JSON.parse(JSON.stringify(defaultValueActions)), part));
     }
 
+    console.log(valueActions);
     //Set controls based on values.
     for (i=0; i < valueActions.length; i++) {
         valueAction = valueActions[i];
@@ -100,8 +104,8 @@ EditorPrototype.resetControls = function() {
 //-------------------------
 //valueActionsOne and valueActionsTwo are passed by reference
 EditorPrototype.joinValues = function(valueActionsOne, valueActionsTwo) {
-    console.log("### Join Values ###");
-    console.log(joinx++);
+    //console.log("### Join Values ###");
+    //console.log(joinx++);
     var i = 0;
     for (i =0; i< valueActionsOne.length; i++) {
         if (valueActionsOne[i].value == null && valueActionsTwo[i].value!=null)
@@ -154,171 +158,38 @@ EditorPrototype.determineValues = function(node, valueActions, part) {
     return valueActions;
 }
 
-
 //-------------------------
 //-----Appy----------------
 //-------------------------
 EditorPrototype.apply = function(node, action) {
-    console.log("Applying:");
-    console.log(""+node.innerHTML);
-    console.log(JSON.stringify(action));
-    var elements,
-        i,
-        parent,
-        remove;
-    if (action.negate) {
-        if (action.input) {
-            console.log("Negating an input");
-            node.style[action.attribute] =  action.value;
-        } else
-            node.classList.toggle(action['class'], false);
-        if (this.blockElements.indexOf(node.tagName)>=0) {
-            remove = true;
-            while(remove) {
-                elements = node.getElementsByClassName(action.class);
-                console.log("NOT CHECKING FOR ATTRIBUTES");
-                if (elements[0])
-                    apply(elements[0], action);
-                else
-                    remove=false;
-            }
-        } else if (this.inlineElements.indexOf(node.tagName)>=0) {
-            console.log("NOT CHECKING FOR ATTRIBUTES");
-            if (node.className == "") {
-                parent = node.parentElement;
-                while(node.firstChild) {
-                    node.parentElement.insertBefore(node.firstChild, node);
-                }
-                node.parentElement.removeChild(node);
-                //do not normalize this, further stuff is done
-            }
+    var oldValue, nextNode, i;
+
+    //Does this action match with tag type
+    //Currently just checks for MAIN, but will eventually be more inclusive
+    if (node.tagName == 'MAIN') {
+        for (i = 0; i< node.childElementCount; i++) {
+            this.apply(node.children[i], action);
         }
-        return this.l();
+        return;
+    }
+
+    //Clear out old and remember oldValue
+    if (action.input) {
+        oldValue = node.style[action.attribute];
+        node.style[action.attribute] =  action.value;
     } else {
-        if (action.input)
-            node.style[action.attribute] =  action.value;
-        else
-            node.classList.toggle(action['class'], true);
-        return this.l();
-    }
-}
-
-//------------------------
-//-----Downwards----------
-//------------------------
-EditorPrototype.downwards = function(node, action, startOffset, endOffset, parents) {
-
-    console.log("!!Downwards:");
-    console.log(node.innerHTML);
-    console.log(JSON.stringify(action));
-    /*if (parents.length) {
-        console.log("Parents:");
-        console.log(parents);
-    }*/
-    var i, childNodes, next, previous, current, action2, inner, children;
-    var parent = node.parentElement;
-
-    if (this.isRestricted(node, action))
-        return false;
-
-    if (this.blockElements.indexOf(node.tagName) != -1)
-        return this.apply(node, action);
-
-    if (this.inlineElements.indexOf(node.tagName) != -1)
-        return this.apply(node, action);
-
-    if (node.nodeType ==3 && node.nodeValue.trim())  {
-
-        //The end needs to be trimmed first so that the offsets aren't messed up
-        if (endOffset && node.length > endOffset){
-            node.splitText(endOffset);
-            next = node.nextSibling;
-        }
-        if (startOffset) {
-            node = node.splitText(startOffset);
-            previous = node.previousSibling;
-        }
-
-        if (action.negate) {
-            current = node;
-            action2 = JSON.parse(JSON.stringify(action));
-            //As long as the current element is not a block on then do this thing
-            //but negate has to be true
-            console.log("Should I clear block?");
-            while (action2.negate && this.blockElements.indexOf(current.tagName) == -1) {
-                console.log("try");
-                console.log(JSON.stringify(current));
-                current=current.parentElement;
-
-                if (hasProperty(current, action)) {
-                    console.log("!clear block");
-                    this.apply(current, action);
-                    action2.negate = false;
-                }
-
-            }
-            if (this.config.debug) {
-                console.log("Action 2, next, previous:");
-                console.log(JSON.stringify(action2));
-                console.log(JSON.stringify(next));
-                console.log(JSON.stringify(previous));
-            }
-
-            if (!action2.negate) {
-                if (next) {
-                    nextNode = this.createParentElement(next, 'SPAN');
-                    this.apply(nextNode, action2);
-                }
-                if (previous) {
-                    previousNode = this.createParentElement(previous, 'SPAN');
-                    this.apply(previousNode, action2);
-                }
-            }
-        } else {
-            var nextGo = false;
-            var previousGo = false;
-            if (node.nextSibling && node.nextSibling.nodeType != 3)
-                nextGo = (node.nextElementSibling.className == action.class);
-            if (node.previousSibling && node.previousSibling.nodeType != 3)
-                previousGo = (node.previousElementSibling.className == action.class);
-
-            console.log(JSON.stringify(node));
-            if (nextGo && !previousGo ) {
-                var next = node.nextElementSibling;
-                next.insertBefore(node, next.firstChild);
-            } else if (!nextGo && previousGo) {
-                var previous = node.previousElementSibling;
-                previous.insertBefore(node, null);
-            } else if (nextGo && previousGo) {
-                var previous = node.previousElementSibling;
-                var next = node.nextElementSibling;
-                previous.insertBefore(node, null);
-                previous.insertBefore(next.firstChild, null);
-                previous.parentElement.removeChild(next);
-            } else {
-                node = this.createParentElement(node, 'SPAN');
-                this.apply(node, action);
-            }
-
-
-            parent.normalize();
-            inner = parent.firstChild;
-            if (parent.childNodes.length == 1) {
-                parent.className = inner.className;
-                parent.insertBefore(inner.firstChild, null);
-                parent.removeChild(inner);
-            }
-        }
+        oldValue = action['class'];
+        node.classList.toggle(action['class'], true);
     }
 
-    children = node.children;
-    parents.push(node.tagName);
+    for (i= node.children.length -1 ;i>=0; i--) {
+        this.removeProperty(node.children[i], action, true);
+    }
+
+
     this.l();
-    if (children) {
-        for (i = 0; i<children.length; i++) {
-            this.downwards(children[i], action, false, false, parents);
-        }
-    }
+    return oldValue;
+
 }
 
 //------------------------
@@ -327,7 +198,7 @@ EditorPrototype.downwards = function(node, action, startOffset, endOffset, paren
 EditorPrototype.hasProperty = function(current, action, children) {
     if (action.input) {
         if (current.style[action.attribute])
-            return true;
+            return current.style[action.attribute];
     } else {
         if (current.classList.contains(action.class))
             return true;
@@ -338,51 +209,197 @@ EditorPrototype.hasProperty = function(current, action, children) {
 }
 
 //------------------------
-//-----Perform------------
+//-----Remove Property---------
 //------------------------
-EditorPrototype.perform = function(action) {
-    var i = 0,
-        range = this.selection.getRangeAt(0),
-        currentSelection = buildSelection(range),
-        current,
-        that = this;
+EditorPrototype.removeProperty = function(current, action, recursive) {
+    var i, next;
+    if (action.input) {
+        if (current.style[action.attribute])
+            current.style[action.attribute] = "";
+    } else {
+        current.classList.toggle(action.class, false);
+    }
 
-    if (config.debug)
-        console.log(currentSelection);
+    //Repeat for children
+    if (recursive) {
+        for (i = current.children.length-1; i>=0; i--) {
+            this.removeProperty(current.children[i], action, true);
+        }
+    }
 
-    //determine if action needs to be negated
-    //no elements can contain class or attribute, and also can not be inside of class or attribute
-    action.negate = false;
-    while (action.negate == false && i<currentSelection.length) {
-        current = currentSelection[i].node;
-        console.log("!Trying to negate");
-        console.log(JSON.stringify(current));
+    this.tryToRemove(current);
 
-        if (current.nodeType == 1)
-            action.negate = this.hasProperty(current, action, true);
+    return true;
+}
 
-        if (current.nodeType == 3) {
-            current= current.parentElement;
-            while (current.tagName != "MAIN") {
-                action.negate = this.hasProperty(current, action, false);
-                current = current.parentElement;
-            }
+//------------------------
+//-----Try to Combine---------
+//------------------------
+EditorPrototype.tryToCombine = function(element) {
+    var sibling = true,
+        parent,
+        i;
+
+    console.log(element);
+    if (this.inlineElements.indexOf(element.tagName)==-1)
+        return true;
+
+    //Go Backwards
+    while (true) {
+        if (!element.previousElementSibling)
+            break;
+
+        sibling = element;
+        element = element.previousElementSibling;
+
+        if (element.tagName != sibling.tagName
+            || element.className != sibling.className
+            || element.style.cssText != sibling.style.cssText
+           )
+            break;
+
+        while (sibling.firstChild) {
+            element.appendChild(sibling.firstChild);
+        }
+        sibling.parentElement.removeChild(sibling);
+    }
+
+    //Go Forwards
+    while (true) {
+        if (!element.nextElementSibling)
+            break;
+
+       sibling = element.nextElementSibling;
+
+        if (element.tagName != sibling.tagName
+            || element.className != sibling.className
+            || element.style.cssText != sibling.style.cssText
+           )
+            break;
+
+        while (sibling.firstChild) {
+            element.appendChild(sibling.firstChild);
+        }
+        sibling.parentElement.removeChild(sibling);
+    }
+
+    parent = element.parentElement;
+    //Check for ending BR
+    if (parent.lastElementChild.tagName == "BR")
+        parent.removeChild(parent.lastElementChild);
+
+    //Go Upwards
+    if (parent.childElementCount == 1) {
+        while (element.firstChild) {
+            parent.appendChild(element.firstChild);
+        }
+        for (i=0; i<element.style.length; i++) {
+            parent.style[element.style[i]]=element.style[element.style[i]];
         }
 
-        i++;
+        parent.cssName += element.cssName;
+
+
+        //needs to somehow combine style information
+        parent.removeChild(parent.firstChild);
+        this.tryToCombine(parent);
     }
-    console.log(action.negate);
 
-    var userSelection = saveSelection(this.el);
+    return true;
+}
+
+//------------------------
+//-----Try to Remove---------
+//------------------------
+EditorPrototype.tryToRemove = function(element) {
+    if (element.className == ""
+        && element.style.length == 0
+        && this.inlineElements.indexOf(element.tagName) != -1
+        && element.parentNode
+       ){
+        this.removeParentElement(element);
+        return true;
+    }
+    return false;
+}
+
+//------------------------
+//-----Perform------------
+//------------------------
+// perform saves and restores selection along with activating a negate sequence
+// and then apply sequence
+EditorPrototype.perform = function(action) {
+    var current,
+        userSelection,
+        range = this.selection.getRangeAt(0),
+        currentSelection = buildSelection(range),
+        that = this,
+        applyElements = [],
+        unapplyElements = [];
+
+
+    userSelection = saveSelection(this.el);
+
+    //Split Selection
     currentSelection.forEach(function(current) {
-        console.log("++++++++++++Current++++++++++++++++");
-        console.log(current);
+        var startOffset = current.startOffset,
+            endOffset   = current.endOffset,
+            node        = current.node,
+            next,
+            previous,
+            parent,
+            action2,
+            value = false,
+            nextParent;
 
-        that.downwards(current.node, action, current.startOffset, current.endOffset, []);
-        current.node.normalize();
-        console.log(current);
+        if (node.tagName != "MAIN") {
+            parent = node.parentElement;
+            while (parent.tagName != "MAIN" && !value) {
+                nextParent = parent.parentElement;
+
+                value = that.hasProperty(parent, action, false);
+                if (value) {
+                    unapplyElements.push(parent);
+                    action2 = JSON.parse(JSON.stringify(action));
+                    action2.value = value;
+                }
+
+                parent = nextParent;
+            }
+        }
+        if (node.nodeType ==1) {
+            applyElements.push(node);
+        }
+        else if (node.nodeType ==3 && node.nodeValue.trim())  {
+            //The end needs to be trimmed first so that the offsets aren't messed up
+            if (endOffset && node.length > endOffset){
+                node.splitText(endOffset);
+                next = that.createParentElement(node.nextSibling, 'SPAN');
+                if (action2)
+                    that.apply(next, action2);
+            }
+            if (startOffset) {
+                node = node.splitText(startOffset);
+                previous = that.createParentElement(node.previousSibling, 'SPAN');
+                if (action2)
+                    that.apply(previous, action2);
+            }
+            node =  that.createParentElement(node, 'SPAN');
+            applyElements.push(node);
+        }
     });
+
+
+    applyElements.forEach(function(current) {
+        that.apply(current,action);
+        that.tryToCombine(current);
+        current.normalize();
+    });
+
+    unapplyElements.forEach(function(current) {
+        that.removeProperty(current, action, false);
+    });
+    this.l();
+
     restoreSelection(this.el, userSelection);
-    console.log("cSel repeat");
-    console.log(JSON.stringify(currentSelection));
 }

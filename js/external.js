@@ -17,15 +17,17 @@ EditorPrototype.start = function(config) {
     this.selection = window.getSelection();
     this.range = null;
 
-
-    this.el.addEventListener('mouseup', function(e) {
+    var mouseFinishedFunction = function(e) {
         var range = that.selection.getRangeAt(0);
         if (that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
             editable = true;
         that.resetControls();
-    });
+    }
+
+    this.el.addEventListener('mouseup', mouseFinishedFunction);
+    this.el.addEventListener('mouseleave', mouseFinishedFunction);
 
     this.el.addEventListener('paste', function(e) {
         if (!editable)
@@ -38,6 +40,7 @@ EditorPrototype.start = function(config) {
             siblingNode;
 
         draggable = false;
+
         //Allow ctrl key compbinations, could be used in the future to access actions
         if (e.ctrlKey)
             return true;
@@ -50,6 +53,7 @@ EditorPrototype.start = function(config) {
         //if backspace or delete aren't pressed then return;
         if ([8,46].indexOf(e.keyCode)==-1)
             return;
+
 
         //check to verify backspace or delete aren't moving into a restricted element
         range = that.selection.getRangeAt(0);
