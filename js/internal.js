@@ -1,26 +1,30 @@
 'use strict';
 
 var EditorPrototype = window.EditorPrototype || {};
-var joinx = 0;
 
+/*
+CURRENTLY
+some modifications across styles does not consolidate one span in p
+to just p
+*/
 
 //------------------------
 //-----l------------------
 //------------------------
-EditorPrototype.l = function (title) {
+EditorPrototype.l = function (title, clear) {
     var old;
 
     if (!this.config.debug)
         return false;
 
-    if (title) {
-        console.log("=============="+title+"================");
-        console.log("===================================");
-    } else
-        console.log("l------------------");
+    if (!title)
+        title = '';
 
-    old = document.getElementsByTagName('article')[0].innerHTML;
-    document.getElementsByTagName('article')[0].innerHTML = '<p>'+this.htmlEncode(this.el.innerHTML)+'</p>'+old;
+    if (clear)
+        old = title;
+    else
+        old = document.getElementsByTagName('article')[0].innerHTML+' '+title;
+    document.getElementsByTagName('article')[0].innerHTML = old+ '<p>'+this.htmlEncode(this.el.outerHTML)+'</p> ';
 }
 
 //------------------------
@@ -29,168 +33,103 @@ EditorPrototype.l = function (title) {
 EditorPrototype.isRestricted = function(node, action) {
     var current = node;
 
-    //this is for test purposes.
-    if (current && action.restricted){
+    //Currently only checks if the tagName of node is restricted by action
+    //stops upon MAIN or no more parents...which is the case upon mouseLeave occasionally
+    if (action.restricted){
         while (current.tagName != "MAIN") {
             if (action.restricted.indexOf(current.tagName) != -1)
                 return true;
             current = current.parentElement;
+            if (!current)
+                return true;
         }
     }
     return false;
 }
 
+
 //------------------------
 //-----Reset Controls-----
 //------------------------
 EditorPrototype.resetControls = function() {
-    this.l("Reset Controls");
+
     var range = this.selection.getRangeAt(0),
         elements = null,
-        currentSelection = buildSelection(range),
-        i = 0,
-        x = 0,
-        valueAction = null,
+        currentSelection = this.buildSelection(range),
+        i,
+        x,
+        valueAction,
         valueActions = [],
         current,
-        part = null,
-        defaultValueActions;
-    joinx = 0;
+        node,
+        part;
 
-    console.log(currentSelection);
 
     //Look through each select element and build a list of actions we need to determine.
     elements = this.controlsEl.getElementsByTagName('SELECT');
     for (i=0; i<elements.length; i++) {
         if (elements[i].dataset['action'] && this.actions[elements[i].dataset['action']]) {
             valueAction = this.actions[elements[i].dataset['action']];
-            valueAction.element = elements[i];
-            valueAction.value = null;
+            valueAction.select = elements[i];
+            valueAction.values = [];
             valueActions.push(valueAction);
         }
     }
 
     //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
-    defaultValueActions = JSON.parse(JSON.stringify(valueActions));
-    for (i=0; i<currentSelection.length; i++) {
-        current = currentSelection[i];
-        //Make sure this node is legit
-        if (!current.startOffset && !current.endOffset && current.node.nodeType == 3)
-            continue;
+    for (x=0; x<currentSelection.length; x++) {
+        current = currentSelection[x];
         if (current.startOffset || current.endOffset && current.node.length > current.endOffset)
+            part = true;
+        else if (current.startOffset == 0 && current.endOffset == 0)
             part = true;
         else
             part = false;
-        this.joinValues(valueActions, this.determineValues(current.node, JSON.parse(JSON.stringify(defaultValueActions)), part));
+
+        node = current.node;
+
+        if (node.nodeType == 1) {
+            for (i=0; i<valueActions.length; i++) {
+                if (valueActions[i].attribute && node.style[valueActions[i].attribute])
+                    valueActions[i].values.push (node.style[valueActions[i].attribute]);
+            }
+        }
+
+        if (part) {
+            while (this.blockElements.indexOf(node.tagName) == -1) {
+                node = node.parentElement;
+                for (i=0; i<valueActions.length; i++) {
+                    if (valueActions[i].attribute && node.style[valueActions[i].attribute])
+                        valueActions[i].values.push( node.style[valueActions[i].attribute]);
+                }
+            }
+        }
     }
 
-    console.log(valueActions);
     //Set controls based on values.
     for (i=0; i < valueActions.length; i++) {
         valueAction = valueActions[i];
-        if (valueAction.value==null)
-            valueAction.value="";
-        for(x = 0; x < valueAction.element.options.length; ++x) {
-            if(valueAction.element.options[x].value === valueAction.value) {
-                valueAction.element.selectedIndex = x;
+        if (valueAction.values.length) {
+            while (valueAction.values.length>1) {
+                if (valueAction.values.shift() != valueAction.values[0]) {
+                    valueAction.values.unshift("");
+                    break;
+                }
+            }
+        } else {
+            valueAction.values.unshift("");
+        }
+        for(x = 0; x < valueAction.select.options.length; ++x) {
+            if(valueAction.select.options[x].value === valueAction.values[0]) {
+                valueAction.select.selectedIndex = x;
                 break;
             }
         }
     }
 }
 
-//-------------------------
-//-----Join Values---------
-//-------------------------
-//valueActionsOne and valueActionsTwo are passed by reference
-EditorPrototype.joinValues = function(valueActionsOne, valueActionsTwo) {
-    //console.log("### Join Values ###");
-    //console.log(joinx++);
-    var i = 0;
-    for (i =0; i< valueActionsOne.length; i++) {
-        if (valueActionsOne[i].value == null && valueActionsTwo[i].value!=null)
-            valueActionsOne[i].value = valueActionsTwo[i].value;
-        if (valueActionsOne[i].value != valueActionsTwo[i].value)
-            valueActionsOne[i].value = "";
-    }
-}
-
-//-------------------------
-//-----Determine Values----
-//-------------------------
-//valueActions is currently passed by reference as a clone in the function call, still needs to be returned
-EditorPrototype.determineValues = function(node, valueActions, part) {
-    console.log("Determing")
-    console.log(node);
-    var children,
-        i = 0,
-        newValueActions,
-        join = false;
-
-    if (node.nodeType == 1) {
-        for (i=0; i<valueActions.length; i++) {
-            if (valueActions[i].attribute && node.style[valueActions[i].attribute])
-                valueActions[i].value = node.style[valueActions[i].attribute];
-        }
-    }
-
-    if (part) {
-        console.log("Entering Part");
-        while (this.blockElements.indexOf(node.tagName) == -1) {
-            newValueActions = JSON.parse(JSON.stringify(valueActions));
-            node = node.parentElement;
-            join = false;
-            for (i=0; i<newValueActions.length; i++) {
-                if (newValueActions[i].attribute && node.style[newValueActions[i].attribute]) {
-                    join = true;
-                    newValueActions[i].value = node.style[newValueActions[i].attribute];
-                }
-            }
-
-            if (join)
-                this.joinValues(valueActions, newValueActions);
-        }
-        for (i=0; i<valueActions.length; i++) {
-            if (valueActions[i].value == null)
-                valueActions[i].value= "";
-        }
-    }
-    return valueActions;
-}
-
-//-------------------------
-//-----Appy----------------
-//-------------------------
-EditorPrototype.apply = function(node, action) {
-    var oldValue, nextNode, i;
-
-    //Does this action match with tag type
-    //Currently just checks for MAIN, but will eventually be more inclusive
-    if (node.tagName == 'MAIN') {
-        for (i = 0; i< node.childElementCount; i++) {
-            this.apply(node.children[i], action);
-        }
-        return;
-    }
-
-    //Clear out old and remember oldValue
-    if (action.input) {
-        oldValue = node.style[action.attribute];
-        node.style[action.attribute] =  action.value;
-    } else {
-        oldValue = action['class'];
-        node.classList.toggle(action['class'], true);
-    }
-
-    for (i= node.children.length -1 ;i>=0; i--) {
-        this.removeProperty(node.children[i], action, true);
-    }
 
 
-    this.l();
-    return oldValue;
-
-}
 
 //------------------------
 //-----Has Property---------
@@ -213,6 +152,7 @@ EditorPrototype.hasProperty = function(current, action, children) {
 //------------------------
 EditorPrototype.removeProperty = function(current, action, recursive) {
     var i, next;
+
     if (action.input) {
         if (current.style[action.attribute])
             current.style[action.attribute] = "";
@@ -226,62 +166,140 @@ EditorPrototype.removeProperty = function(current, action, recursive) {
             this.removeProperty(current.children[i], action, true);
         }
     }
-
     this.tryToRemove(current);
 
     return true;
 }
 
+EditorPrototype.checkType = function(element) {
+    if (this.blockElements.indexOf(element.tagName)!=-1)
+        return 'block';
+    else if (this.inlineElements.indexOf(element.tagName)!=-1)
+        return 'inline';
+    else
+        return false;
+}
+
+EditorPrototype.transferProperty = function(startElement, finishElement, action) {
+    console.log(startElement.outerHTML);
+    console.log(finishElement.outerHTML);
+    if (action.input) {
+        console.log(action.attribute);
+        finishElement.style[action.attribute] = startElement.style[action.attribute];
+        startElement.style[action.attribute] = "";
+    } else {
+        finishElement.classList.toggle(action.class, true);
+        startElement.classList.toggle(action.class, false);
+    }
+
+    console.log(startElement.outerHTML);
+    console.log(finishElement.outerHTML);
+    return true;
+}
+
+EditorPrototype.combineSibling = function(leftElement, rightElement, action) {
+    var leftType = this.checkType(leftElement),
+        rightType = this.checkType(rightElement),
+        value = this.hasProperty(leftElement, action);
+    console.log(leftElement);
+    console.log(rightElement);
+    console.log(value);
+    if (!value)
+        return false;
+
+    if (leftType != 'block'
+        && rightType != 'block'
+        && leftElement.tagName == rightElement.tagName
+        && leftElement.className == rightElement.className
+        && leftElement.style.cssText == rightElement.style.cssText
+    ){
+        //Are the elements inlined and identical
+        //move contents from one to the other
+        while (rightElement.firstChild)
+            leftElement.appendChild(rightElement.firstChild);
+        rightElement.parentElement.removeChild(rightElement);
+        return leftElement;
+    } else if (value == this.hasProperty(rightElement, action))  {
+
+        //Or do they share the value for this action
+        //if they are both inline then create a span parent
+        //if they are both P block then create a div parent
+        //if the left one is a div then append right into div
+        //if the right one is a div then move left on to beginning
+
+        if (rightElement.tagName == 'DIV') {
+            this.removeProperty(leftElement, action, false);
+            rightElement.insertBefore(leftElement, rightElement.firstChild);
+            return rightElement;
+        } else {
+            if (leftType == 'inline' && rightType=='inline') {
+                leftElement = this.createParentElement(leftElement, 'SPAN');
+                this.transferProperty(leftElement.firstChild, leftElement, action);
+
+            } else if (leftType == 'block' & rightType == 'block') {
+                leftElement = this.createParentElement(leftElement, 'DIV');
+                console.log("GoING TO TRANSFER");
+                this.transferProperty(leftElement.firstChild, leftElement, action);
+            }
+            console.log(leftElement.outerHTML);
+            this.removeProperty(rightElement, action, false);
+            leftElement.appendChild(rightElement);
+            return leftElement;
+        }
+    }
+    return false;
+}
+
 //------------------------
 //-----Try to Combine---------
 //------------------------
-EditorPrototype.tryToCombine = function(element) {
+EditorPrototype.tryToCombine = function(element, action) {
     var sibling = true,
+        previous,
         parent,
-        i;
+        i,
+        go,
+        value,
+        type;
 
     console.log(element);
-    if (this.inlineElements.indexOf(element.tagName)==-1)
+    if (this.config.combineDebug) {
+        console.log("Trying to combine");
+        console.log(element.innerHTML);
+        console.log(action);
+    }
+
+    if (element.nodeType == 3)
         return true;
 
-    //Go Backwards
-    while (true) {
-        if (!element.previousElementSibling)
+    if (this.tryToRemove(element))
+        return true;
+
+    if (element.tagName == 'MAIN')
+        return true;
+
+    //Combine Backwards
+    while (element.previousElementSibling) {
+        previous = element;
+        element = this.combineSibling(element.previousElementSibling, element, action);
+        if (!element) {
+            element = previous;
             break;
-
-        sibling = element;
-        element = element.previousElementSibling;
-
-        if (element.tagName != sibling.tagName
-            || element.className != sibling.className
-            || element.style.cssText != sibling.style.cssText
-           )
-            break;
-
-        while (sibling.firstChild) {
-            element.appendChild(sibling.firstChild);
         }
-        sibling.parentElement.removeChild(sibling);
     }
+    console.log(element);
 
-    //Go Forwards
-    while (true) {
-        if (!element.nextElementSibling)
+    //Combine Forwards
+    while (element.nextElementSibling) {
+        previous = element;
+        element = this.combineSibling(element, element.nextElementSibling, action);
+        if (!element) {
+            element = previous;
             break;
-
-       sibling = element.nextElementSibling;
-
-        if (element.tagName != sibling.tagName
-            || element.className != sibling.className
-            || element.style.cssText != sibling.style.cssText
-           )
-            break;
-
-        while (sibling.firstChild) {
-            element.appendChild(sibling.firstChild);
         }
-        sibling.parentElement.removeChild(sibling);
+
     }
+    console.log(element);
 
     parent = element.parentElement;
     //Check for ending BR
@@ -289,21 +307,43 @@ EditorPrototype.tryToCombine = function(element) {
         parent.removeChild(parent.lastElementChild);
 
     //Go Upwards
-    if (parent.childElementCount == 1) {
-        while (element.firstChild) {
-            parent.appendChild(element.firstChild);
+    //the variable go determines whether or not we should try to go upwards
+    //by seeing if the parent does not have a class AND style
+    //or by seeing if the parents class and style matches all children
+    //if so then try to remove the parent and recombine
+    //
+    //if go is false then see if if we only have one child
+    //if so then absorb that child
+    go = true;
+    if (element.tagName == 'MAIN' || parent.tagName== 'MAIN')
+        go = false;
+    else if (parent.style.cssText != "" || parent.className != "") {
+        for (i=0; i<parent.children.length; i++) {
+            if (parent.style.cssText != parent.children[i].style.cssText
+                || parent.className != parent.children[i].className
+               ) {
+                go = false;
+            }
         }
-        for (i=0; i<element.style.length; i++) {
-            parent.style[element.style[i]]=element.style[element.style[i]];
-        }
-
-        parent.cssName += element.cssName;
-
-
-        //needs to somehow combine style information
-        parent.removeChild(parent.firstChild);
-        this.tryToCombine(parent);
     }
+    if (go) {
+        if (this.tryToRemove(element.parentElement))
+            this.tryToCombine(element, action); //?should this also combine last child of former parent?
+    } else if (parent.childElementCount == 1) {
+        if (parent.childNodes.length == 1
+            || (!parent.firstChild.textContent.trim()  && !parent.lastChild.textContent.trim())
+        ) {
+            for (i=0; i<element.style.length; i++) {
+                parent.style[element.style[i]]=element.style[element.style[i]];
+            }
+            parent.cssName += element.cssName;
+
+            this.removeParentElement(element);
+            this.tryToCombine(parent, action);
+
+        }
+    }
+
 
     return true;
 }
@@ -312,11 +352,21 @@ EditorPrototype.tryToCombine = function(element) {
 //-----Try to Remove---------
 //------------------------
 EditorPrototype.tryToRemove = function(element) {
+    console.log(element);
+    console.log(element.outerHTML);
+    if (element.innerHTML == "") {
+        this.removeParentElement(element);
+        return true;
+    }
     if (element.className == ""
         && element.style.length == 0
-        && this.inlineElements.indexOf(element.tagName) != -1
+        && this.blockElements.indexOf(element.tagName) == -1
         && element.parentNode
+        && !element.href
        ){
+        console.log("%%% Removing");
+        console.log(element.tagName);
+        console.log(element.innerHTML);
         this.removeParentElement(element);
         return true;
     }
@@ -332,74 +382,120 @@ EditorPrototype.perform = function(action) {
     var current,
         userSelection,
         range = this.selection.getRangeAt(0),
-        currentSelection = buildSelection(range),
+        currentSelection = this.buildSelection(range),
         that = this,
         applyElements = [],
-        unapplyElements = [];
+        unapplyElements = [],
+        combineElements = [];
 
+    console.log(action);
+    console.log(currentSelection);
 
     userSelection = saveSelection(this.el);
 
-    //Split Selection
     currentSelection.forEach(function(current) {
         var startOffset = current.startOffset,
             endOffset   = current.endOffset,
             node        = current.node,
-            next,
-            previous,
             parent,
             action2,
             value = false,
-            nextParent;
+            i,
+            count,
+            otherNode;
 
-        if (node.tagName != "MAIN") {
-            parent = node.parentElement;
-            while (parent.tagName != "MAIN" && !value) {
-                nextParent = parent.parentElement;
-
-                value = that.hasProperty(parent, action, false);
+        //Go up as far as MAIN looking for value to set as action2
+        //If found then distribute value to children and remove
+        //Then repeat until we are at level of node
+        otherNode = node;
+        if (otherNode.nodeType == 3)
+            otherNode = otherNode.parentElement;
+        while (true) {
+                value = that.hasProperty(otherNode, action, false);
                 if (value) {
-                    unapplyElements.push(parent);
                     action2 = JSON.parse(JSON.stringify(action));
                     action2.value = value;
                 }
+                if (otherNode.tagName == 'MAIN')
+                    break;
 
-                parent = nextParent;
-            }
+                otherNode = otherNode.parentElement;
+
         }
-        if (node.nodeType ==1) {
-            applyElements.push(node);
-        }
-        else if (node.nodeType ==3 && node.nodeValue.trim())  {
+
+        //Break apart text nodes
+        if (node.nodeType ==3 && node.nodeValue.trim())  {
+
             //The end needs to be trimmed first so that the offsets aren't messed up
             if (endOffset && node.length > endOffset){
                 node.splitText(endOffset);
-                next = that.createParentElement(node.nextSibling, 'SPAN');
                 if (action2)
-                    that.apply(next, action2);
+                    that.createParentElement(node.nextSibling, 'SPAN');
             }
             if (startOffset) {
                 node = node.splitText(startOffset);
-                previous = that.createParentElement(node.previousSibling, 'SPAN');
                 if (action2)
-                    that.apply(previous, action2);
+                    that.createParentElement(node.previousSibling, 'SPAN');
             }
             node =  that.createParentElement(node, 'SPAN');
-            applyElements.push(node);
         }
+
+        //Repeatedly go from node to the closest ancestor with this style
+        //and then distribute that style to all decendants
+        //and add that element to the unapplyElements
+        parent = node.parentElement;
+        while (action2 && parent) {
+            if (that.hasProperty(parent, action, false)) {
+                for (i=0; i< parent.childNodes.length; i++) {
+                    that.apply(parent.childNodes[i], action2);
+                    unapplyElements.push(parent);
+                    combineElements.push(parent.childNodes[i]);
+                }
+                if (parent == node.parentElement)
+                   break;
+                parent = node.parentElement;
+            } else {
+                parent = parent.parentElement;
+            }
+        }
+        applyElements.push(node);
     });
 
+    this.l('Preparing');
 
     applyElements.forEach(function(current) {
-        that.apply(current,action);
-        that.tryToCombine(current);
-        current.normalize();
+        console.log(current.innerHTML)
+        current = that.apply(current , action, true);
     });
+    if (applyElements.length) {
+        console.log(applyElements);
+    }
 
     unapplyElements.forEach(function(current) {
         that.removeProperty(current, action, false);
     });
-    this.l();
+    if (unapplyElements.length) {
+        this.l('Unapplying');
+    }
+
+    //Combine applyElements and combineElements into one combineElements
+    combineElements = applyElements.concat(combineElements);
+    combineElements.forEach(function(current) {
+        that.tryToCombine(current, action);
+    });
+    if (combineElements.length) {
+        this.l('Combining');
+    }
+
+    this.el.normalize();
+
+    if (action.event) {
+        action.event({
+            nodes: combineElements,
+
+        });
+    }
+
 
     restoreSelection(this.el, userSelection);
 }

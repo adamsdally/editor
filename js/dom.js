@@ -8,6 +8,10 @@ EditorPrototype.htmlEncode = function( input ) {
 
 
 EditorPrototype.removeParentElement = function(nodeToBeRemoved) {
+    //Make sure element hasn't already been removed
+    if (!nodeToBeRemoved.parentElement)
+        return true;
+
     while (nodeToBeRemoved.firstChild) {
         nodeToBeRemoved.parentNode.insertBefore(nodeToBeRemoved.firstChild, nodeToBeRemoved);
     }
@@ -27,4 +31,5 @@ EditorPrototype.createChildElement = function(node, tagName) {
     element.innerHTML = node.innerHTML;
     node.innerHTML = "";
     node.appendChild(element);
+    return element;
 }

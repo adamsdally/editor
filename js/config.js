@@ -1,7 +1,8 @@
 'use strict';
-var config = {
+var config1 = {
     debug: true,
 };
-var config1 = {
-    debug: false,
+var config = {
+    debug: true,
+    combineDebug: true,
 };

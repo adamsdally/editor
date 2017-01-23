@@ -1,6 +1,10 @@
 'use strict';
 var EditorPrototype = window.EditorPrototype || {};
 
+EditorPrototype.about  = function() {
+    console.log("Hello! This html text editor was designed and is copyright Adam Dally. You may use this personally or commercially as long as it is not a primary component of a sold product or service. If you have any questions please email me at adamsdally@yahoo.com Have a wonderful Day! -Adam");
+}
+
 EditorPrototype.start = function(config) {
     var that = this;
 
@@ -13,25 +17,32 @@ EditorPrototype.start = function(config) {
     this.actions = config.actions;
     this.blockElements = config.blockElements;
     this.inlineElements = config.inlineElements;
+    this.onChange = config.onChange;
 
     this.selection = window.getSelection();
     this.range = null;
 
     var mouseFinishedFunction = function(e) {
         var range = that.selection.getRangeAt(0);
-        if (that.isRestricted(range.startContainer, that.actions.input))
+        if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
             editable = true;
-        that.resetControls();
+        if (editable)
+            that.resetControls();
+
+        console.log(that.buildSelection(range));
     }
 
     this.el.addEventListener('mouseup', mouseFinishedFunction);
-    this.el.addEventListener('mouseleave', mouseFinishedFunction);
+    //this.el.addEventListener('mouseleave', mouseFinishedFunction);
 
     this.el.addEventListener('paste', function(e) {
-        if (!editable)
-            e.preventDefault();
+        e.preventDefault();
+
+        var text = e.clipboardData.getData("text/plain");
+        document.execCommand("insertHTML", false, text);
+        that.changeEvent();
     });
 
     this.el.addEventListener('keypress', function(e) {
@@ -52,17 +63,21 @@ EditorPrototype.start = function(config) {
 
         //if backspace or delete aren't pressed then return;
         if ([8,46].indexOf(e.keyCode)==-1)
-            return;
+            return that.changeEvent();
 
 
         //check to verify backspace or delete aren't moving into a restricted element
         range = that.selection.getRangeAt(0);
+        console.log(range);
         if (e.keyCode == 8 && range.startOffset==0) {
             current = range.startContainer;
             siblingNode = current.previousElementSibling;
-            while (!siblingNode || !current) {
+            while ((!siblingNode || !current) && current.tagName != "MAIN") {
                 current = current.parentElement;
                 siblingNode = current.previousElementSibling;
+            }
+            if (current.tagName == 'MAIN') {
+                siblingNode = false;
             }
         }
         if (e.keyCode == 46 && range.startOffset==range.startContainer.length) {
@@ -74,8 +89,11 @@ EditorPrototype.start = function(config) {
                 siblingNode = current.nextElementSibling;
             }
         }
-        if (siblingNode && isRestricted(siblingNode, that.actions.input))
+        console.log(current);
+        console.log(siblingNode);
+        if (siblingNode && that.isRestricted(siblingNode, that.actions.input))
             e.preventDefault();
+
     });
 
     this.el.addEventListener('keyup', function(e) {
@@ -88,6 +106,7 @@ EditorPrototype.start = function(config) {
             else
                 editable = true;
         }
+        that.changeEvent();
     });
 
      this.controlsEl.addEventListener('click', function(e) {
@@ -97,7 +116,7 @@ EditorPrototype.start = function(config) {
         if (e.target.tagName != 'A')
             return false;
 
-        that.l("Click");
+        that.l("Click", true);
 
         if (e.target.dataset['action'] && that.actions[e.target.dataset['action']])
                 action = that.actions[e.target.dataset['action']];
@@ -105,6 +124,8 @@ EditorPrototype.start = function(config) {
             return false;
 
         that.perform(action);
+
+        that.changeEvent();
 
         return false;
     });
@@ -116,7 +137,7 @@ EditorPrototype.start = function(config) {
         if (e.target.tagName != 'SELECT')
             return false;
 
-        that.l("Change");
+        that.l("Change", true);
 
         if (e.target.dataset['action'] && that.actions[e.target.dataset['action']])
                 action = that.actions[e.target.dataset['action']];
@@ -126,6 +147,7 @@ EditorPrototype.start = function(config) {
             action.value = e.target.options[e.target.selectedIndex].value;
 
         that.perform(action);
+        that.changeEvent();
     });
 
     if (this.config == null)

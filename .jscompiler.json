@@ -2,19 +2,20 @@
 	"outputs": [
 		{
 			"inputs": [
+                "/js/maintainSelection.js",
                 "/js/buildSelection.js",
+                "/js/isActionable.js",
                 "/js/config.js",
                 "/js/dom.js",
-                "/js/editor.js",
-                "/js/external.js",
-                "/js/getApplyableElementsInParent.js",
+                "/js/events.js",
                 "/js/internal.js",
-                "/js/isActionable.js",
-                "/js/maintainSelection.js"
+                "/js/external.js",
+                "/js/editor.js",
+                "/js/getApplyableElementsInParent.js"
             ],
 			"output": "editor.min.js",
 			"generateMap": true,
-			"mangle": true,
+			"mangle": false,
 			"isolate": false
 		}
 	]

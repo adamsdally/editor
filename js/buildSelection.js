@@ -1,6 +1,7 @@
-function buildSelection(range) {
-    console.log("..........Range.......");
-    console.log(range);
+'use strict';
+var EditorPrototype = window.EditorPrototype || {};
+
+EditorPrototype.buildSelection = function(range) {
     var currentSelection = [],
         startSelection = [],
         endSelection = [],
@@ -8,10 +9,19 @@ function buildSelection(range) {
         endParent,
         current,
         parent,
+        next,
+        previous,
         startContainer,
         endContainer;
 
-    //All ranges should preferrably end up in text nodes
+
+    //If we're dealing with an empty element.
+    if (!range.startContainer.textContent) {
+        /*currentSelection.push({
+            node:range.startContainer
+        });*/
+        return currentSelection;
+    }
 
     //If we're at end of startContainer then fix:
     if (range.startContainer.length == range.startOffset) {
@@ -27,18 +37,25 @@ function buildSelection(range) {
             range.setStart(next, 0);
         }
     }
+
     //If we're at the start of the endContainer then fix:
     if (range.endOffset == 0) {
         if (range.endContainer.previousSibling)
             previous = range.endContainer.previousSibling;
-        else
+        else if (range.endContainer.parentElement.previousSibling)
             previous = range.endContainer.parentElement.previousSibling;
-        while (previous.lastChild) {
-            previous = previous.lastChild;
+        else
+            previous = false;
+        if (previous) {
+            while (previous.lastChild) {
+                previous = previous.lastChild;
+            }
+            range.setEnd(previous, previous.length);
         }
-        range.setEnd(previous, previous.length);
     }
 
+    //After fixing start and end conditions on range
+    //copy containers to local variables to play with
     startContainer = range.startContainer;
     endContainer = range.endContainer;
 
@@ -58,45 +75,58 @@ function buildSelection(range) {
                    && endContainer.parentElement != range.commonAncestorContainer
                   ){
                 endContainer = endContainer.parentElement;
+                if (endContainer.nextElementSibling && endContainer.nextElementSibling.tagName == 'BR')
+                    endContainer = endContainer.nextElementSibling;
             }
         }
     }
 
     //Are we dealing within a single node?
     if (startContainer == endContainer) {
-            if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
-                while (startContainer.parentElement.childNodes.length == 1
-                       && startContainer.parentElement != range.commonAncestorContainer) {
-                    startContainer = startContainer.parentElement;
-                }
-                currentSelection.push({
-                    node:startContainer
-                });
-            } else {
-                currentSelection.push({
-                    node:startContainer,
-                    startOffset: range.startOffset,
-                    endOffset: range.endOffset
-                });
+        if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
+            while (startContainer.parentElement.childNodes.length == 1
+                   && startContainer.parentElement != range.commonAncestorContainer) {
+                startContainer = startContainer.parentElement;
             }
+            currentSelection.push({
+                node:startContainer
+            });
+        } else {
+            currentSelection.push({
+                node:startContainer,
+                startOffset: range.startOffset,
+                endOffset: range.endOffset
+            });
+        }
         return currentSelection;
     }
 
+    //Are we dealing with just ancestral node?
+    if (startContainer.parentElement == endContainer.parentElement) {
+        if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
+            currentSelection.push({
+                node:startContainer.parentElement
+            });
+            return currentSelection;
+        }
+    }
 
     //Determine start and end parents
     startParent = startContainer;
     endParent = endContainer;
-    while (startParent.parentElement != range.commonAncestorContainer)
-        startParent = startParent.parentElement;
-    while (endParent.parentElement != range.commonAncestorContainer)
-        endParent = endParent.parentElement;
+    if (startParent != range.commonAncestorContainer)
+        while (startParent.parentElement != range.commonAncestorContainer)
+            startParent = startParent.parentElement;
+    if (endParent != range.commonAncestorContainer)
+        while (endParent.parentElement != range.commonAncestorContainer)
+            endParent = endParent.parentElement;
 
     //Build start alternating right then up until startParent is reached
     //Only add those that are not direct ancestors
     current = startContainer;
     parent = current.parentElement;
     if (range.startOffset){
-        if (current.length > range.startOffset) {
+        if (current.length > range.startOffset  && current.nodeValue.trim()) {
             startSelection.push({
                 node: current,
                 startOffset: range.startOffset
@@ -109,9 +139,10 @@ function buildSelection(range) {
     }
     while (current != endParent) {
         if (current) {
-            startSelection.push({
-                node: current
-            });
+            if (current.nodeType != 3 || current.nodeValue.trim())
+                startSelection.push({
+                    node: current
+                });
             if (current.nextSibling)
                 current = current.nextSibling;
             else
@@ -129,10 +160,11 @@ function buildSelection(range) {
     current = endContainer;
     parent = current.parentElement;
     if (range.endOffset && range.endOffset!=range.endContainer.length){
-        endSelection.push({
-            node: current,
-            endOffset: range.endOffset
-        });
+        if (current.nodeType != 3 ||  current.nodeValue.trim())
+            endSelection.push({
+                node: current,
+                endOffset: range.endOffset
+            });
         if (current.previousSibling)
             current= current.previousSibling;
         else
@@ -140,9 +172,10 @@ function buildSelection(range) {
     }
     while (current != startParent) {
         if (current) {
-            startSelection.push({
-                node: current
-            });
+            if (current.nodeType != 3 || current.nodeValue.trim())
+                startSelection.push({
+                    node: current
+                });
             if (current.previousSibling)
                 current = current.previousSibling;
             else
@@ -154,35 +187,6 @@ function buildSelection(range) {
             parent = parent.parentElement;
         }
     }
-
-    //Empty start and end selections without neighbors indicate the full ancestor is in use
-    if (startSelection.length == 0 && endSelection.length == 0 && !startParent.previousElementSibling && !endParent.nextElementSibling) {
-        currentSelection.push({
-            node: range.commonAncestorContainer
-        });
-        return currentSelection
-    }
-
-    //otherwise add the start and end parents to selections
-    /*if (startSelection.length == 0) {
-        startSelection.push({
-            node: startParent
-        });
-    }
-    if (endSelection.length == 0) {
-        endSelection.push({
-            node: endParent
-        });
-    }*/
-
-    //build selection between start and end parents
-    /*current = startParent;
-    while (current.nextSibling != endParent) {
-        current = current.nextSibling;
-        currentSelection.push({
-            node: current
-        });
-    }*/
 
     return currentSelection.concat(startSelection,endSelection);
 }

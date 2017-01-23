@@ -24,19 +24,34 @@
         <script type="text/javascript" src="js/isActionable.js"></script>
         <script type="text/javascript" src="js/config.js"></script>
         <script type="text/javascript" src="js/dom.js"></script>
+        <script type="text/javascript" src="js/events.js"></script>
         <script type="text/javascript" src="js/internal.js"></script>
         <script type="text/javascript" src="js/external.js"></script>
         <script type="text/javascript" src="js/editor.js"></script>
+        <script type="text/javascript" src="js/apply.js"></script>
         <script type="text/javascript" src="js/getApplyableElementsInParent.js"></script>
 
 
-        <!--<script type="text/javascript" src="editor.min.js"></script>-->
+        <!--
+        <script type="text/javascript" src="editor.min.js"></script>
+-->
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
         <nav>
-            <a href="" class="b-bold" data-action="bold">Bold</a>
-            <a href="" class="b-strong" data-action="italic">Italic</a>
+            <!--<a href="" class="b-bold" data-action="bold">Bold</a>
+            <a href="" class="b-strong" data-action="italic">Italic</a>-->
+            <a href="" data-action="copy">Copy</a>
+            <a href="" data-action="paste">Paste</a>
+            <a href="" data-action="link">Link</a>
+            <select data-action="font-style" name="font-style">
+                <option value=""></option>
+                <option value="italic">Italic</option>
+            </select>
+            <select data-action="font-weight" name="font-weight">
+                <option value=""></option>
+                <option value="bold">Bold</option>
+            </select>
             <select data-action="font-size" name="font-size">
                 <option value=""></option>
                 <option value="12px">12px</option>
@@ -81,8 +96,9 @@
         </p>
         <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
-            <p style="font-size:28px"><span style="color:red">Hello</span><span style="color:black">World!</span></p>
+            <p style="font-size:28px"><span style="color:red">Hello</span>World!</p>
             <p style="font-size:28px"><span style="color:black">Hello</span><span style="color:red">World!</span><br></p>
+            <p style="font-size:28px">HelloWorld!</p>
         </main>
         <script type="text/javascript">
         'use strict';
@@ -91,12 +107,26 @@
             var el = document.getElementsByTagName('main')[0];
             var controlsEl = document.getElementsByTagName('NAV')[0];
 
-            el.contentEditable = true;
+            //el.contentEditable = true;
 
-            var blockElements = ['H1', 'P',],
-                inlineElements = ['SPAN'];
+            //grouping elements ===> 'DIV'
+            var blockElements = ['MAIN', 'H1', 'P',],
+                inlineElements = ['SPAN', 'A'];
 
+            var clipboard = null;
             var actions = {
+                'copy': {
+                    'event': function(current) {
+                        console.log(current);
+                    }
+                },
+                'link' : {
+                    'element': 'A',
+                    'property': 'href',
+                    'event': function(current) {
+                        current.href="http://google.com";
+                    },
+                },
                 'input' : {
                     'restricted': ['H1'],
                 },
@@ -105,6 +135,14 @@
                 },
                 'bold': {
                     'class': 'bold',
+                },
+                'font-weight': {
+                    'attribute': 'font-weight',
+                    'input': 'select',
+                },
+                'font-style': {
+                    'attribute': 'font-style',
+                    'input': 'select',
                 },
                 'font-size': {
                     'restricted': ['H1'],
@@ -130,6 +168,9 @@
                 actions: actions,
                 blockElements: blockElements,
                 inlineElements: inlineElements,
+                onChange: function(e) {
+                    //console.log(e);
+                }
             });
 
            })();
