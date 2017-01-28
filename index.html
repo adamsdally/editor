@@ -29,6 +29,7 @@
         <script type="text/javascript" src="js/external.js"></script>
         <script type="text/javascript" src="js/editor.js"></script>
         <script type="text/javascript" src="js/apply.js"></script>
+        <script type="text/javascript" src="js/resetControls.js"></script>
         <script type="text/javascript" src="js/getApplyableElementsInParent.js"></script>
 
 
@@ -41,6 +42,7 @@
         <nav>
             <!--<a href="" class="b-bold" data-action="bold">Bold</a>
             <a href="" class="b-strong" data-action="italic">Italic</a>-->
+            <a href="" data-action="test">Test</a>
             <a href="" data-action="copy">Copy</a>
             <a href="" data-action="paste">Paste</a>
             <a href="" data-action="link">Link</a>
@@ -96,7 +98,7 @@
         </p>
         <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
-            <p style="font-size:28px"><span style="color:red">Hello</span>World!</p>
+            <p style="font-size:28px"><span style="color:red; font-style:italic;">Hello</span>World!</p>
             <p style="font-size:28px"><span style="color:black">Hello</span><span style="color:red">World!</span><br></p>
             <p style="font-size:28px">HelloWorld!</p>
         </main>
@@ -114,7 +116,34 @@
                 inlineElements = ['SPAN', 'A'];
 
             var clipboard = null;
+
+            var tests = {
+
+                'bold': {
+                    'html': 'Hello World',
+                    'selection': {
+                        'start':0,
+                        'end':11
+                    },
+                    'result': '<main class="bold">Hello World</main>'
+
+                },
+                'italic': {
+                    'html': 'Hello World',
+                    'selection': {
+                        'start':0,
+                        'end':11
+                    },
+                    'result': '<main class="italic">Hello World</main>'
+                }
+            };
+
             var actions = {
+                'test': {
+                    event: function(current){
+                        console.log(current);
+                    }
+                },
                 'copy': {
                     'event': function(current) {
                         console.log(current);
@@ -166,6 +195,7 @@
                 el: el,
                 controlsEl: controlsEl,
                 actions: actions,
+                tests: tests,
                 blockElements: blockElements,
                 inlineElements: inlineElements,
                 onChange: function(e) {

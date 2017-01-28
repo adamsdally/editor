@@ -15,6 +15,7 @@ EditorPrototype.start = function(config) {
     this.el = config.el;
     this.controlsEl = config.controlsEl;
     this.actions = config.actions;
+    this.tests = config.tests;
     this.blockElements = config.blockElements;
     this.inlineElements = config.inlineElements;
     this.onChange = config.onChange;
@@ -22,7 +23,7 @@ EditorPrototype.start = function(config) {
     this.selection = window.getSelection();
     this.range = null;
 
-    var mouseFinishedFunction = function(e) {
+    var selectFunction = function(e) {
         var range = that.selection.getRangeAt(0);
         if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
@@ -30,11 +31,9 @@ EditorPrototype.start = function(config) {
             editable = true;
         if (editable)
             that.resetControls();
-
-        console.log(that.buildSelection(range));
     }
 
-    this.el.addEventListener('mouseup', mouseFinishedFunction);
+    this.el.addEventListener('mouseup', selectFunction);
     //this.el.addEventListener('mouseleave', mouseFinishedFunction);
 
     this.el.addEventListener('paste', function(e) {
@@ -43,6 +42,7 @@ EditorPrototype.start = function(config) {
         var text = e.clipboardData.getData("text/plain");
         document.execCommand("insertHTML", false, text);
         that.changeEvent();
+        selectFunction();
     });
 
     this.el.addEventListener('keypress', function(e) {
@@ -93,6 +93,7 @@ EditorPrototype.start = function(config) {
         console.log(siblingNode);
         if (siblingNode && that.isRestricted(siblingNode, that.actions.input))
             e.preventDefault();
+        selectFunction();
 
     });
 
@@ -107,6 +108,7 @@ EditorPrototype.start = function(config) {
                 editable = true;
         }
         that.changeEvent();
+        selectFunction();
     });
 
      this.controlsEl.addEventListener('click', function(e) {
@@ -167,4 +169,6 @@ EditorPrototype.start = function(config) {
             e.target.innerHTML = "Dragging Off";
         }
     });*/
+    this.test();
+    this.el.contentEditable = true;
 }

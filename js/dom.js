@@ -1,5 +1,6 @@
 'use strict';
 
+var doGetCaretPosition, setSelection;
 var EditorPrototype = window.EditorPrototype || {};
 
 EditorPrototype.htmlEncode = function( input ) {
@@ -32,4 +33,46 @@ EditorPrototype.createChildElement = function(node, tagName) {
     node.innerHTML = "";
     node.appendChild(element);
     return element;
+}
+
+EditorPrototype.Element = function(el) {
+    return {
+        el: el,
+        setSelection: function(start, end) {
+            restoreSelection(el, {
+                start: start,
+                end: end
+            });
+        }
+    }
+}
+
+doGetCaretPosition = function(el) {
+    var CaretPos = 0;
+
+    if (el.selectionStart || el.selectionStart == 0) {
+        // Standard.
+        CaretPos = el.selectionStart;
+    } else if (document.selection) {
+        // Legacy IE
+        el.focus();
+        var Sel = document.selection.createRange ();
+        Sel.moveStart ('character', -el.value.length);
+        CaretPos = Sel.text.length;
+    }
+
+    return (CaretPos);
+}
+
+setSelection = function(el,start, end) {
+    if (get.setSelectionRange) {
+        get.focus();
+        get.setSelectionRange(start,end);
+    } else if (get.createTextRange) {
+        var range = get.createTextRange();
+        range.collapse(true);
+        range.moveEnd('character', start);
+        range.moveStart('character', end);
+        range.select();
+    }
 }

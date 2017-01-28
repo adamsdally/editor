@@ -48,86 +48,6 @@ EditorPrototype.isRestricted = function(node, action) {
 }
 
 
-//------------------------
-//-----Reset Controls-----
-//------------------------
-EditorPrototype.resetControls = function() {
-
-    var range = this.selection.getRangeAt(0),
-        elements = null,
-        currentSelection = this.buildSelection(range),
-        i,
-        x,
-        valueAction,
-        valueActions = [],
-        current,
-        node,
-        part;
-
-
-    //Look through each select element and build a list of actions we need to determine.
-    elements = this.controlsEl.getElementsByTagName('SELECT');
-    for (i=0; i<elements.length; i++) {
-        if (elements[i].dataset['action'] && this.actions[elements[i].dataset['action']]) {
-            valueAction = this.actions[elements[i].dataset['action']];
-            valueAction.select = elements[i];
-            valueAction.values = [];
-            valueActions.push(valueAction);
-        }
-    }
-
-    //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
-    for (x=0; x<currentSelection.length; x++) {
-        current = currentSelection[x];
-        if (current.startOffset || current.endOffset && current.node.length > current.endOffset)
-            part = true;
-        else if (current.startOffset == 0 && current.endOffset == 0)
-            part = true;
-        else
-            part = false;
-
-        node = current.node;
-
-        if (node.nodeType == 1) {
-            for (i=0; i<valueActions.length; i++) {
-                if (valueActions[i].attribute && node.style[valueActions[i].attribute])
-                    valueActions[i].values.push (node.style[valueActions[i].attribute]);
-            }
-        }
-
-        if (part) {
-            while (this.blockElements.indexOf(node.tagName) == -1) {
-                node = node.parentElement;
-                for (i=0; i<valueActions.length; i++) {
-                    if (valueActions[i].attribute && node.style[valueActions[i].attribute])
-                        valueActions[i].values.push( node.style[valueActions[i].attribute]);
-                }
-            }
-        }
-    }
-
-    //Set controls based on values.
-    for (i=0; i < valueActions.length; i++) {
-        valueAction = valueActions[i];
-        if (valueAction.values.length) {
-            while (valueAction.values.length>1) {
-                if (valueAction.values.shift() != valueAction.values[0]) {
-                    valueAction.values.unshift("");
-                    break;
-                }
-            }
-        } else {
-            valueAction.values.unshift("");
-        }
-        for(x = 0; x < valueAction.select.options.length; ++x) {
-            if(valueAction.select.options[x].value === valueAction.values[0]) {
-                valueAction.select.selectedIndex = x;
-                break;
-            }
-        }
-    }
-}
-
 
 
 
@@ -262,13 +182,6 @@ EditorPrototype.tryToCombine = function(element, action) {
         value,
         type;
 
-    console.log(element);
-    if (this.config.combineDebug) {
-        console.log("Trying to combine");
-        console.log(element.innerHTML);
-        console.log(action);
-    }
-
     if (element.nodeType == 3)
         return true;
 
@@ -287,7 +200,6 @@ EditorPrototype.tryToCombine = function(element, action) {
             break;
         }
     }
-    console.log(element);
 
     //Combine Forwards
     while (element.nextElementSibling) {
@@ -299,7 +211,6 @@ EditorPrototype.tryToCombine = function(element, action) {
         }
 
     }
-    console.log(element);
 
     parent = element.parentElement;
     //Check for ending BR
@@ -352,8 +263,6 @@ EditorPrototype.tryToCombine = function(element, action) {
 //-----Try to Remove---------
 //------------------------
 EditorPrototype.tryToRemove = function(element) {
-    console.log(element);
-    console.log(element.outerHTML);
     if (element.innerHTML == "") {
         this.removeParentElement(element);
         return true;
@@ -388,8 +297,6 @@ EditorPrototype.perform = function(action) {
         unapplyElements = [],
         combineElements = [];
 
-    console.log(action);
-    console.log(currentSelection);
 
     userSelection = saveSelection(this.el);
 
@@ -464,12 +371,8 @@ EditorPrototype.perform = function(action) {
     this.l('Preparing');
 
     applyElements.forEach(function(current) {
-        console.log(current.innerHTML)
         current = that.apply(current , action, true);
     });
-    if (applyElements.length) {
-        console.log(applyElements);
-    }
 
     unapplyElements.forEach(function(current) {
         that.removeProperty(current, action, false);
@@ -492,10 +395,50 @@ EditorPrototype.perform = function(action) {
     if (action.event) {
         action.event({
             nodes: combineElements,
-
+            element: this.Element(this.el),
+            editor: that,
         });
     }
+    if (action.maintainSelection || action.maintainSelection == null)
+        restoreSelection(this.el, userSelection);
+}
 
-
-    restoreSelection(this.el, userSelection);
+EditorPrototype.test = function() {
+    console.log("======================================================================");
+    console.log("===========================RUNNING TESTS==============================");
+    var action, test;
+    var save = this.el.innerHTML;
+    for (action in this.tests) {
+        test = this.tests[action];
+        console.log("Action: "+action);
+        console.log(test);
+        this.el.classList = "";
+        this.el.innerHTML = test.html;
+        restoreSelection(
+            this.el,
+            test.selection
+        );
+        this.perform(this.actions[action]);
+        if (this.el.outerHTML == test.result) {
+            console.log("%c"+action, "color: green");
+            console.log("%cPass", "color: green");
+        } else {
+            console.log("%c"+action, "color: red");
+            console.log("%cFail", "color: red");
+            console.group();
+                console.log("%cWanted:", "color:red")
+                console.group();
+                    console.log("%c"+test.result, "color: red");
+                console.groupEnd();
+                console.log("%cReceived:", "color:red")
+                console.group();
+                    console.log("%c"+this.el.outerHTML, "color: red");
+                console.groupEnd();
+            console.groupEnd();
+        }
+    }
+    this.el.classList = "";
+    this.el.innerHTML = save;
+    console.log("======================================================================");
+    console.log("======================================================================");
 }
