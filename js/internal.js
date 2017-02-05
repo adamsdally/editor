@@ -30,9 +30,8 @@ EditorPrototype.l = function (title, clear) {
 //------------------------
 //-----Is Restricted-----
 //------------------------
-EditorPrototype.isRestricted = function(node, action) {
-    var current = node;
-
+EditorPrototype.isRestricted = function(current, action) {
+    console.log('check is restricted');
     //Currently only checks if the tagName of node is restricted by action
     //stops upon MAIN or no more parents...which is the case upon mouseLeave occasionally
     if (action.restricted){
@@ -42,6 +41,7 @@ EditorPrototype.isRestricted = function(node, action) {
             current = current.parentElement;
             if (!current)
                 return true;
+            console.log(current)
         }
     }
     return false;
@@ -392,13 +392,17 @@ EditorPrototype.perform = function(action) {
 
     this.el.normalize();
 
+    restoreSelection(this.el, userSelection);
+    currentSelection = this.buildSelection(range);
+
     if (action.event) {
         action.event({
-            nodes: combineElements,
+            selection: currentSelection,
             element: this.Element(this.el),
             editor: that,
         });
     }
+
     if (action.maintainSelection || action.maintainSelection == null)
         restoreSelection(this.el, userSelection);
 }
@@ -407,38 +411,66 @@ EditorPrototype.test = function() {
     console.log("======================================================================");
     console.log("===========================RUNNING TESTS==============================");
     var action, test;
+    var result,
+        passed = 0,
+        failed = 0;
     var save = this.el.innerHTML;
     for (action in this.tests) {
         test = this.tests[action];
         console.log("Action: "+action);
         console.log(test);
-        this.el.classList = "";
-        this.el.innerHTML = test.html;
+
+        //Reset and Initialize for New Test
+        if (test.init)
+            test.init(this);
+        this.el.removeAttribute('class');
+
+        this.el.innerHTML = test.html || '';
+        test.selection = test.selection || {
+            'start':0,
+            'end':0
+        };
         restoreSelection(
             this.el,
             test.selection
         );
+
+        //Run Action
         this.perform(this.actions[action]);
-        if (this.el.outerHTML == test.result) {
+
+        //Get Results
+        if (typeof test.result === 'function') {
+            result = test.result(this);
+        } else {
+            result = this.el.outerHTML
+        }
+
+        //Output
+        if (result == test.wanted) {
+            passed++;
             console.log("%c"+action, "color: green");
             console.log("%cPass", "color: green");
         } else {
+            failed++;
             console.log("%c"+action, "color: red");
             console.log("%cFail", "color: red");
             console.group();
                 console.log("%cWanted:", "color:red")
                 console.group();
-                    console.log("%c"+test.result, "color: red");
+                    console.log("%c"+test.wanted, "color: red");
                 console.groupEnd();
                 console.log("%cReceived:", "color:red")
                 console.group();
-                    console.log("%c"+this.el.outerHTML, "color: red");
+                    console.log("%c"+result, "color: red");
                 console.groupEnd();
             console.groupEnd();
         }
     }
     this.el.classList = "";
     this.el.innerHTML = save;
+    console.log("======================================================================");
+    console.log("%c Failed: "+failed, "color:red")
+    console.log("%c Passed: "+passed, "color:green")
     console.log("======================================================================");
     console.log("======================================================================");
 }

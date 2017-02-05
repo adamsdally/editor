@@ -35,6 +35,28 @@ EditorPrototype.createChildElement = function(node, tagName) {
     return element;
 }
 
+EditorPrototype.insert = function(node) {
+    //Get current range and collapse it to the end
+    var range = this.selection.getRangeAt(0);
+    range.collapse(false);
+
+    //Switch based on the node type we're trying to insert
+    console.log(range);
+    var type = this.checkType(node);
+    var current = range.endContainer;
+    if (type == 'block') {
+        while (this.checkType(current)!=type ) {
+            current = current.parentElement;
+        }
+        current.parentElement.insertBefore(node,current.nextElementSibling);
+        return;
+    }
+
+    if (node.nodeType == '3') {
+        range.insertNode(node);
+    }
+}
+
 EditorPrototype.Element = function(el) {
     return {
         el: el,

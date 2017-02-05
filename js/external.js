@@ -23,8 +23,12 @@ EditorPrototype.start = function(config) {
     this.selection = window.getSelection();
     this.range = null;
 
+    //The select function should be executed everytime a user input is made which changes the selection
+    //should consider whenever events change selection
     var selectFunction = function(e) {
+        console.log('select function');
         var range = that.selection.getRangeAt(0);
+        console.log(range);
         if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
@@ -46,6 +50,7 @@ EditorPrototype.start = function(config) {
     });
 
     this.el.addEventListener('keypress', function(e) {
+        console.log("key press");
         var range,
             current,
             siblingNode;
@@ -89,8 +94,12 @@ EditorPrototype.start = function(config) {
                 siblingNode = current.nextElementSibling;
             }
         }
-        console.log(current);
-        console.log(siblingNode);
+
+        //Travel down to lowest element.
+        while(siblingNode.childElementCount >0) {
+            siblingNode = siblingNode.children[0];
+        }
+
         if (siblingNode && that.isRestricted(siblingNode, that.actions.input))
             e.preventDefault();
         selectFunction();
