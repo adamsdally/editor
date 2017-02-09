@@ -98,3 +98,33 @@ setSelection = function(el,start, end) {
         range.select();
     }
 }
+
+//Returns the next element at bottom of tree
+EditorPrototype.nextElement = function(el) {
+    while (!el.nextElementSibling && el.tagName!='MAIN') {
+        el = el.parentElement;
+    }
+    if (el.nextElementSibling)
+        el = el.nextElementSibling;
+    else
+        return false;
+    while (el.childElementCount) {
+        el = el.children[0];
+    }
+    return el;
+}
+
+//Returns the previous element at bottom of tree
+EditorPrototype.previousElement = function(el) {
+    while (!el.previousElementSibling && el.tagName!='MAIN') {
+        el = el.parentElement;
+    }
+    if (el.previousElementSibling)
+        el = el.previousElementSibling;
+    else
+        return false;
+    while (el.childElementCount) {
+        el = el.children[el.childElementCount-1];
+    }
+    return el;
+}

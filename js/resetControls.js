@@ -30,7 +30,6 @@ EditorPrototype.resetControls = function() {
     //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
     for (x=0; x<currentSelection.length; x++) {
         current = currentSelection[x];
-
         if (current.startOffset || current.endOffset && current.node.length > current.endOffset)
             part = true;
         else if (current.startOffset == 0 && current.endOffset == 0)

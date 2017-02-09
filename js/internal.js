@@ -41,7 +41,6 @@ EditorPrototype.isRestricted = function(current, action) {
             current = current.parentElement;
             if (!current)
                 return true;
-            console.log(current)
         }
     }
     return false;

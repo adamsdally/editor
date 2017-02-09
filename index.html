@@ -13,6 +13,10 @@
             .italic {
                 font-style:italic;
             }
+            .column {
+                border:1px solid black;
+                background-color:orange;
+            }
             article {
                 margin:20px;
                 padding:20px;
@@ -25,7 +29,7 @@
                 margin:5px;
             }
             .title h1 {
-
+                z-index:100;
             }
             .title p {
                 background-color:yellow;
@@ -60,6 +64,7 @@
             <a href="" data-action="paste">Paste</a>
             <a href="" data-action="link">Link</a>
             <a href="" data-action="title">Title</a>
+            <a href="" data-action="column">Column</a>
             <select data-action="font-style" name="font-style">
                 <option value=""></option>
                 <option value="italic">Italic</option>
@@ -112,6 +117,7 @@
         </p>
         <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
+            <h1>Editor</h1>
             <p>Para</p>
             <div class="title">
                 <h1>Hello World!</h1>
@@ -130,7 +136,8 @@
 
             //grouping elements ===> 'DIV'
             var blockElements = ['MAIN', 'H1', 'P',],
-                inlineElements = ['SPAN', 'A'];
+                inlineElements = ['SPAN', 'A'],
+                groupElements = ['DIV'];
 
             var clipboard = null;
 
@@ -168,6 +175,14 @@
                         'end':11
                     },
                     'wanted': '<main class="italic">Hello World</main>'
+                },
+                'column': {
+                    'html': 'Hello World',
+                    'selection': {
+                        'start': 0,
+                        'end': 11,
+                    },
+                    'wanted': '<main><div class="column">Hello World</div></main'
                 }
             };
 
@@ -221,6 +236,10 @@
                 'bold': {
                     'class': 'bold',
                 },
+                'column': {
+                    'class': 'column',
+                    'element': 'div'
+                },
                 'font-weight': {
                     'attribute': 'font-weight',
                     'input': 'select',
@@ -254,6 +273,7 @@
                 tests: tests,
                 blockElements: blockElements,
                 inlineElements: inlineElements,
+                groupElements: groupElements,
                 onChange: function(e) {
                     //console.log(e);
                 }

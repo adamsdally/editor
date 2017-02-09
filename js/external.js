@@ -18,23 +18,29 @@ EditorPrototype.start = function(config) {
     this.tests = config.tests;
     this.blockElements = config.blockElements;
     this.inlineElements = config.inlineElements;
+    this.groupElements = config.groupElements;
     this.onChange = config.onChange;
 
     this.selection = window.getSelection();
     this.range = null;
 
+    //Experimental variable. It's use correlates to the cursor possibly moving to a blank element.
+    this.ghost = false;
+    this.ghostStart = false;
+
     //The select function should be executed everytime a user input is made which changes the selection
     //should consider whenever events change selection
     var selectFunction = function(e) {
-        console.log('select function');
         var range = that.selection.getRangeAt(0);
-        console.log(range);
+
+
+        /*console.log('select function');
         if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
             editable = true;
         if (editable)
-            that.resetControls();
+            that.resetControls();  */
     }
 
     this.el.addEventListener('mouseup', selectFunction);
@@ -56,6 +62,7 @@ EditorPrototype.start = function(config) {
             siblingNode;
 
         draggable = false;
+        range = that.selection.getRangeAt(0);
 
         //Allow ctrl key compbinations, could be used in the future to access actions
         if (e.ctrlKey)
@@ -63,8 +70,26 @@ EditorPrototype.start = function(config) {
 
         //If an arrow key is not pressed and editable is false
         //Then prevent keypress
-        if ([37,38,39,40].indexOf(e.keyCode)==-1 && !editable)
-            return e.preventDefault();
+        if ([37,38,39,40].indexOf(e.keyCode)==-1) {
+            if (!editable)
+                return e.preventDefault();
+        } else if (range.collapsed) {
+
+            //If an arrow key was pressed then we need to detect the new cursor positition
+            //and properly orient onto elements that might currently be empty
+            //still a little finiky and should probably detect other keypresses, like backspace
+            //and dealing with selections, but for now is sufficient
+            if (e.keyCode == 39 && range.endOffset == range.endContainer.length) {
+                that.ghost = that.nextElement(range.endContainer);
+                that.ghostStart = true;
+                return that.changeEvent();
+            } else if (e.keyCode == 37 && range.startOffset == 0) {
+                that.ghost = that.previousElement(range.endContainer);
+                that.ghostStart = false;
+                return that.changeEvent();
+            }
+        }
+
 
         //if backspace or delete aren't pressed then return;
         if ([8,46].indexOf(e.keyCode)==-1)
@@ -72,7 +97,6 @@ EditorPrototype.start = function(config) {
 
 
         //check to verify backspace or delete aren't moving into a restricted element
-        range = that.selection.getRangeAt(0);
         console.log(range);
         if (e.keyCode == 8 && range.startOffset==0) {
             current = range.startContainer;
@@ -95,8 +119,9 @@ EditorPrototype.start = function(config) {
             }
         }
 
+
         //Travel down to lowest element.
-        while(siblingNode.childElementCount >0) {
+        while(siblingNode && siblingNode.childElementCount >0) {
             siblingNode = siblingNode.children[0];
         }
 
@@ -108,6 +133,17 @@ EditorPrototype.start = function(config) {
 
     this.el.addEventListener('keyup', function(e) {
         var range;
+        range = that.selection.getRangeAt(0);
+
+        //If cursor movement has caused us to pass over a ghost then return to the ghost, focus, and clear.
+        if (that.ghost) {
+            console.log(that.ghost);
+            range.setStart(that.ghost,0);
+            range.collapse(that.ghostStart);
+            that.ghost = false;
+        }
+
+        console.log(range);
         //On keys that could move the cursor out of its current position check isRestricted
         if ([37,38,39,40].indexOf(e.keyCode)!=-1) {
             range = that.selection.getRangeAt(0);

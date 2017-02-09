@@ -5,6 +5,7 @@ EditorPrototype.changeEvent = function() {
 
     //Make sure that the change did not completely empty element
     if (this.el.textContent.trim() == '') {
+        console.log("test");
         this.el.innerHTML = '<p><br></p>';
         var range = document.createRange();
 

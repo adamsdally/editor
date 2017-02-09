@@ -23,6 +23,16 @@ EditorPrototype.buildSelection = function(range) {
         return currentSelection;
     }
 
+    //First check for single element with single cursor position
+     if (range.startContainer == range.endContainer && range.startOffset == range.endOffset) {
+            currentSelection.push({
+                node:range.startContainer,
+                startOffset: range.startOffset,
+                endOffset: range.endOffset
+            });
+        return currentSelection;
+    }
+
     //If we're at end of startContainer then fix:
     if (range.startContainer.length == range.startOffset) {
         if (range.startContainer.nextSibling)
@@ -52,6 +62,7 @@ EditorPrototype.buildSelection = function(range) {
             }
             range.setEnd(previous, previous.length);
         }
+        console.log("going backwards");
     }
 
     //After fixing start and end conditions on range
