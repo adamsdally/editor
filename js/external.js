@@ -20,7 +20,6 @@ EditorPrototype.start = function(config) {
     this.inlineElements = config.inlineElements;
     this.groupElements = config.groupElements;
     this.onChange = config.onChange;
-
     this.selection = window.getSelection();
     this.range = null;
 
@@ -143,7 +142,6 @@ EditorPrototype.start = function(config) {
             that.ghost = false;
         }
 
-        console.log(range);
         //On keys that could move the cursor out of its current position check isRestricted
         if ([37,38,39,40].indexOf(e.keyCode)!=-1) {
             range = that.selection.getRangeAt(0);

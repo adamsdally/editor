@@ -91,10 +91,17 @@ EditorPrototype.removeProperty = function(current, action, recursive) {
 }
 
 EditorPrototype.checkType = function(element) {
-    if (this.blockElements.indexOf(element.tagName)!=-1)
+    if (element.tagName) {
+        element = element.tagName;
+    }
+    if (element == "MAIN")
+        return 'top';
+    else if (this.blockElements.indexOf(element)!=-1)
         return 'block';
-    else if (this.inlineElements.indexOf(element.tagName)!=-1)
+    else if (this.inlineElements.indexOf(element)!=-1)
         return 'inline';
+    else if (this.groupElements.indexOf(element) != -1)
+        return 'group';
     else
         return false;
 }
@@ -258,6 +265,17 @@ EditorPrototype.tryToCombine = function(element, action) {
     return true;
 }
 
+//-------------------------
+//-----Is Special----------
+//-------------------------
+EditorPrototype.isSpecial = function(element) {
+    if (element.tagName == 'A') {
+        return true;
+    }
+    if (element.classList.contains("column"))
+        return true;
+}
+
 //------------------------
 //-----Try to Remove---------
 //------------------------
@@ -270,11 +288,8 @@ EditorPrototype.tryToRemove = function(element) {
         && element.style.length == 0
         && this.blockElements.indexOf(element.tagName) == -1
         && element.parentNode
-        && !element.href
+        && !this.isSpecial(element)
        ){
-        console.log("%%% Removing");
-        console.log(element.tagName);
-        console.log(element.innerHTML);
         this.removeParentElement(element);
         return true;
     }
@@ -289,8 +304,7 @@ EditorPrototype.tryToRemove = function(element) {
 EditorPrototype.perform = function(action) {
     var current,
         userSelection,
-        range = this.selection.getRangeAt(0),
-        currentSelection = this.buildSelection(range),
+        currentSelection = this.buildSelection(),
         that = this,
         applyElements = [],
         unapplyElements = [],
@@ -392,7 +406,7 @@ EditorPrototype.perform = function(action) {
     this.el.normalize();
 
     restoreSelection(this.el, userSelection);
-    currentSelection = this.buildSelection(range);
+    currentSelection = this.buildSelection();
 
     if (action.event) {
         action.event({
@@ -402,8 +416,8 @@ EditorPrototype.perform = function(action) {
         });
     }
 
-    if (action.maintainSelection || action.maintainSelection == null)
-        restoreSelection(this.el, userSelection);
+    //if (action.maintainSelection || action.maintainSelection == null)
+      //  restoreSelection(this.el, userSelection);
 }
 
 EditorPrototype.test = function() {

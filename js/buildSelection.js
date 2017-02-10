@@ -1,7 +1,7 @@
 'use strict';
 var EditorPrototype = window.EditorPrototype || {};
 
-EditorPrototype.buildSelection = function(range) {
+EditorPrototype.buildSelection = function() {
     var currentSelection = [],
         startSelection = [],
         endSelection = [],
@@ -13,6 +13,7 @@ EditorPrototype.buildSelection = function(range) {
         previous,
         startContainer,
         endContainer;
+    var range = this.selection.getRangeAt(0);
 
 
     //If we're dealing with an empty element.
@@ -136,6 +137,7 @@ EditorPrototype.buildSelection = function(range) {
     //Only add those that are not direct ancestors
     current = startContainer;
     parent = current.parentElement;
+
     if (range.startOffset){
         if (current.length > range.startOffset  && current.nodeValue.trim()) {
             startSelection.push({

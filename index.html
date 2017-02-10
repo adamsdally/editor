@@ -118,7 +118,7 @@
         <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
             <h1>Editor</h1>
-            <p>Para</p>
+            <p>Para Link Kiwi Apollo</p>
             <div class="title">
                 <h1>Hello World!</h1>
                 <p></p>
@@ -182,7 +182,15 @@
                         'start': 0,
                         'end': 11,
                     },
-                    'wanted': '<main><div class="column">Hello World</div></main'
+                    'wanted': '<main><div class="column">Hello World</div></main>'
+                },
+                'link': {
+                    'html': 'Hello World',
+                    'selection': {
+                        'start': 1,
+                        'end': 10,
+                    },
+                    'wanted': '<main>H<a href="http://google.com">ello Worl</a>d</main>'
                 }
             };
 
@@ -224,8 +232,11 @@
                     'element': 'A',
                     'property': 'href',
                     'event': function(current) {
-                        current.href="http://google.com";
+                        console.log(current);
+
+                        current.selection[0].node.href="http://google.com";
                     },
+                    'special': true
                 },
                 'input' : {
                     'restricted': ['H1'],
@@ -238,7 +249,8 @@
                 },
                 'column': {
                     'class': 'column',
-                    'element': 'div'
+                    'element': 'DIV',
+                    'special': true
                 },
                 'font-weight': {
                     'attribute': 'font-weight',

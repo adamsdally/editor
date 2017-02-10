@@ -5,7 +5,7 @@ var EditorPrototype = window.EditorPrototype || {};
 //-----Appy----------------
 //-------------------------
 EditorPrototype.apply = function(node, action, removeFromChildren) {
-    var nextNode, i;
+    var nextNode, i, type;
 
     if (node.nodeType == 3) {
         if (node.nodeValue.trim())
@@ -13,23 +13,32 @@ EditorPrototype.apply = function(node, action, removeFromChildren) {
         else
             return node;
     }
-
-    //Needs to match tag type here
-    //??????????
-
+    //If the action has an element travel up or down chain until
+    //the correct level is reached to apply action to
     if (action.element) {
+        console.log("Element");
         console.log(action.element);
-        //Are we in a block element and element is inline
-        if (this.blockElements.indexOf(node.tagName)!=-1) {
-            if (this.inlineElements.indexOf(action.element)!=-1)
-                node = this.createChildElement(node, action.element);
-            else
-                console.log("not doing this yet");
-        } else {
-            console.log("not yet doing this all the way");
-            node = this.createParentElement(node, action.element);
+        type = this.checkType(node);
+        switch (this.checkType(action.element)) {
+            case 'group':
+                if (type == 'top')
+                    node = this.createChildElement(node, action.element);
+                else
+                    node = this.createParentElement(node, action.element);
+                break;
+            case 'block':
+                console.log("block;");
+                //node = this.createParentElement(node, action.element);
+                break;
+            case 'inline':
+                console.log("inline");
+                if (type == 'block' || type=='inline') {
+                    node = this.createChildElement(node, action.element);
+                }
+                break;
         }
     }
+    console.log(node.outerHTML);
 
     if (action.input)
         node.style[action.attribute] =  action.value;
