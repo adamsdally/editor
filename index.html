@@ -4,6 +4,40 @@
         <title>Editor</title>
         <meta charset="utf-8" />
         <style type="text/css">
+            html, body {
+                margin:0px;
+                padding:0px;
+            }
+            main {
+                padding:32px;
+                padding-top:64px;
+
+            }
+            nav {
+                margin:0px;
+                padding:20px;
+                background-color:#444;
+                color:white;
+                border-bottom:2px solid black;
+                position:fixed;
+                top:0px;
+                left:0px;
+                width:100%;
+                z-index:1000;
+                display:flex;
+            }
+            nav a {
+                color:white;
+                text-decoration: none;
+                margin-right:20px;
+            }
+            nav select {
+                margin-right:20px;
+            }
+            nav .powered {
+                font-weight:bold;
+                color:yellow;
+            }
             h1, h2, h3, strong {
                 font-weight: inherit;
             }
@@ -21,6 +55,7 @@
                 margin:20px;
                 padding:20px;
                 border:1px solid black;
+                visibility: hidden;
             }
             .title {
                 display:flex;
@@ -28,12 +63,29 @@
                 border:1px solid black;
                 margin:5px;
             }
-            .title h1 {
-                z-index:100;
+            .profile {
+                min-height:200px;
+                border:2px solid black;
+                padding:20px;
+                margin:20px 0px;
             }
-            .title p {
-                background-color:yellow;
+            .profile h1 {
+                z-index:100;
+                font-size:2em;
+                padding-top:20px;
+            }
+            .profile img {
+                margin:20px;
+                float:left;
+                width:100px;
+                height:100px;
+                display:block;
+                background-color:gray;
+            }
+            .profile p {
+                clear:both;
                 flex-grow:1;
+                font-size:1.2em;
             }
         </style>
         <script type="text/javascript" src="js/maintainSelection.js"></script>
@@ -59,20 +111,22 @@
         <nav>
             <!--<a href="" class="b-bold" data-action="bold">Bold</a>
             <a href="" class="b-strong" data-action="italic">Italic</a>-->
-            <a href="" data-action="test">Test</a>
-            <a href="" data-action="copy">Copy</a>
-            <a href="" data-action="paste">Paste</a>
+            <!--<a href="" data-action="copy">Copy</a>
+            <a href="" data-action="paste">Paste</a>-->
             <a href="" data-action="link">Link</a>
-            <a href="" data-action="title">Title</a>
+            <a href="" data-action="profile">Profile</a>
             <a href="" data-action="column">Column</a>
+            <label>Font Style:</label>
             <select data-action="font-style" name="font-style">
                 <option value=""></option>
                 <option value="italic">Italic</option>
             </select>
+            <label>Font Weight:</label>
             <select data-action="font-weight" name="font-weight">
                 <option value=""></option>
                 <option value="bold">Bold</option>
             </select>
+            <label>Font Size:</label>
             <select data-action="font-size" name="font-size">
                 <option value=""></option>
                 <option value="12px">12px</option>
@@ -90,6 +144,7 @@
                 <option value="60px">60px</option>
                 <option value="64px">64px</option>
             </select>
+            <label>Font Family:</label>
             <select data-action="font-family" name="font-family">
                 <option value=""></option>
                 <option value="Arial">Arial</option>
@@ -98,6 +153,7 @@
                 <option value="Lucida Console">Lucida Console</option>
                 <option value="Impact">Impact</option>
             </select>
+            <label>Color:</label>
             <select data-action="color" name="color">
                 <option value=""></option>
                 <option value="black">Black</option>
@@ -118,12 +174,7 @@
         <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
             <h1>Editor</h1>
-            <p>Para Link Kiwi Apollo</p>
-            <div class="title">
-                <h1>Hello World!</h1>
-                <p></p>
-            </div>
-            <p>Para</p>
+            <p>By Adam Dally</p>
         </main>
         <script type="text/javascript">
         'use strict';
@@ -135,9 +186,9 @@
             //el.contentEditable = true;
 
             //grouping elements ===> 'DIV'
-            var blockElements = ['MAIN', 'H1', 'P',],
+            var blockElements = ['MAIN', 'H1', 'P', 'DIV'],
                 inlineElements = ['SPAN', 'A'],
-                groupElements = ['DIV'];
+                groupElements = [];
 
             var clipboard = null;
 
@@ -184,22 +235,17 @@
                     },
                     'wanted': '<main><div class="column">Hello World</div></main>'
                 },
-                'link': {
+                /*'link': {
                     'html': 'Hello World',
                     'selection': {
                         'start': 1,
                         'end': 10,
                     },
                     'wanted': '<main>H<a href="http://google.com">ello Worl</a>d</main>'
-                }
+                }*/
             };
 
             var actions = {
-                'test': {
-                    event: function(current){
-                        console.log(current);
-                    }
-                },
                 'copy': {
                     'init': function(editor) {
                         editor.clipboard = editor.clipboard || "";
@@ -216,16 +262,27 @@
 
                     }
                 },
-                'title': {
+                'profile': {
                     'event': function(current) {
-                        var range = current.editor.selection.getRangeAt(0);
-                        range.collapse(false);
-                        var div = document.createElement('h1');
-                        div.innerHTML = "Title";
-                        div.className = "title";
-                        //range.insertNode(div);
+                        //First make sure we are not in a profile, this may or may not be the permanent location for such code
+                        //editor maybe should send out class or elements above, unknown
+
+                        var node = current.selection[0].node;
+                        while (node.parentElement.tagName != "MAIN") {
+                            node = node.parentElement;
+                            if (node.classList.contains("profile")) {
+                                node.parentElement.removeChild(node);
+                                return;
+                            }
+                        }
+
+                        var div = document.createElement('DIV');
+                        div.innerHTML = "<img /><h1>Susan Willis</h1><p>Susan is a great worker at our company. She has been in the business for over 70 yeras and brings along her 17 children. Each of them does a great job as well. Next month will be her birthday and we are ever excieted. Possibly the best employee ever.</p>";
+                        div.className = "profile";
+                        var ed = document.createElement('P');
+                        ed.innerHTML = "<br>"
+                        current.editor.insert(ed);
                         current.editor.insert(div);
-                        current.editor.insert(document.createTextNode("Hi"));
                     }
                 },
                 'link' : {
@@ -233,8 +290,8 @@
                     'property': 'href',
                     'event': function(current) {
                         console.log(current);
-
-                        current.selection[0].node.href="http://google.com";
+                        var result = window.prompt("Web Address?", "http://google.com");
+                        current.selection[0].node.href= result;
                     },
                     'special': true
                 },

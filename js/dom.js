@@ -100,31 +100,37 @@ setSelection = function(el,start, end) {
 }
 
 //Returns the next element at bottom of tree
-EditorPrototype.nextElement = function(el) {
-    while (!el.nextElementSibling && el.tagName!='MAIN') {
+EditorPrototype.nextNode = function(el) {
+    console.log(el);
+    while (!el.nextSibling && el.tagName!='MAIN') {
         el = el.parentElement;
+        console.log(el);
+        console.log(el.nextSibling);
     }
-    if (el.nextElementSibling)
-        el = el.nextElementSibling;
+    if (el.nextSibling)
+        el = el.nextSibling;
     else
         return false;
-    while (el.childElementCount) {
-        el = el.children[0];
+    while (el.childNodes.length) {
+        console.log(el);
+        el = el.childNodes[0];
+        console.log(el);
     }
+    console.log(el);
     return el;
 }
 
 //Returns the previous element at bottom of tree
-EditorPrototype.previousElement = function(el) {
-    while (!el.previousElementSibling && el.tagName!='MAIN') {
+EditorPrototype.previousNode = function(el) {
+    while (!el.previousSibling && el.tagName!='MAIN') {
         el = el.parentElement;
     }
-    if (el.previousElementSibling)
-        el = el.previousElementSibling;
+    if (el.previousSibling)
+        el = el.previousSibling;
     else
         return false;
-    while (el.childElementCount) {
-        el = el.children[el.childElementCount-1];
+    while (el.childNodes.length) {
+        el = el.childNodes[el.childNodes.length-1];
     }
     return el;
 }

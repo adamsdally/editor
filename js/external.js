@@ -33,13 +33,13 @@ EditorPrototype.start = function(config) {
         var range = that.selection.getRangeAt(0);
 
 
-        /*console.log('select function');
-        if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
+        console.log('select function');
+        /*if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
             editable = true;
-        if (editable)
-            that.resetControls();  */
+        if (editable)*/
+            that.resetControls();
     }
 
     this.el.addEventListener('mouseup', selectFunction);
@@ -79,11 +79,11 @@ EditorPrototype.start = function(config) {
             //still a little finiky and should probably detect other keypresses, like backspace
             //and dealing with selections, but for now is sufficient
             if (e.keyCode == 39 && range.endOffset == range.endContainer.length) {
-                that.ghost = that.nextElement(range.endContainer);
+                that.ghost = that.nextNode(range.endContainer);
                 that.ghostStart = true;
                 return that.changeEvent();
             } else if (e.keyCode == 37 && range.startOffset == 0) {
-                that.ghost = that.previousElement(range.endContainer);
+                that.ghost = that.previousNode(range.endContainer);
                 that.ghostStart = false;
                 return that.changeEvent();
             }
@@ -135,7 +135,7 @@ EditorPrototype.start = function(config) {
         range = that.selection.getRangeAt(0);
 
         //If cursor movement has caused us to pass over a ghost then return to the ghost, focus, and clear.
-        if (that.ghost) {
+        if (that.ghost && that.ghost.nodeType == 1) {
             console.log(that.ghost);
             range.setStart(that.ghost,0);
             range.collapse(that.ghostStart);
