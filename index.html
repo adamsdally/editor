@@ -10,8 +10,16 @@
             }
             main {
                 padding:32px;
-                padding-top:64px;
+                padding-top:92px;
+                display: flex;
+                flex-wrap:wrap;
+                outline:0px;
 
+            }
+            h1, h2, h3, strong {
+                font-weight: inherit;
+                padding:0px;
+                margin:0px;
             }
             nav {
                 margin:0px;
@@ -38,9 +46,6 @@
                 font-weight:bold;
                 color:yellow;
             }
-            h1, h2, h3, strong {
-                font-weight: inherit;
-            }
             .bold {
                 font-weight: bold;
             }
@@ -48,8 +53,10 @@
                 font-style:italic;
             }
             .column {
-                border:1px solid black;
-                background-color:orange;
+                border:1px dashed gray;
+                padding:20px;
+                flex-basis:100%;
+                box-sizing: border-box;
             }
             article {
                 margin:20px;
@@ -87,6 +94,7 @@
                 flex-grow:1;
                 font-size:1.2em;
             }
+
         </style>
         <script type="text/javascript" src="js/maintainSelection.js"></script>
         <script type="text/javascript" src="js/buildSelection.js"></script>
@@ -116,6 +124,7 @@
             <a href="" data-action="link">Link</a>
             <a href="" data-action="profile">Profile</a>
             <a href="" data-action="column">Column</a>
+            <a href="" data-action="remove-column">Remove Column</a>
             <label>Font Style:</label>
             <select data-action="font-style" name="font-style">
                 <option value=""></option>
@@ -162,19 +171,23 @@
                 <option value="green">Green</option>
                 <option value="yellow">Yellow</option>
             </select>
+            <label>Width:</label>
+            <select data-action="column-width" name="column-width">
+                <option value=""></option>
+                <option value="100">100%</option>
+                <option value="75">75%</option>
+                <option value="66.66">66%</option>
+                <option value="50">50%</option>
+                <option value="33.33">33%</option>
+                <option value="25">25%</option>
+            </select>
             <!--<a href="" data-action="blueBorder">Blue Border</a>-->
         </nav>
-        <!--<h1>Editor by Adam Dally</h1>
-        <p class="italic">Last updated: August 18, 2016</p>
-        <p>This editor is being designed to provide the most accessible way to extend editing
-            functionality via classes, css style properties, and more, along with fine tuned
-            control on what can be edited by what. For instance, you can not change the
-            size of the this documents title but can for everything else :)
-        </p>
-        <p>Modifying text across different styles and paragraphs is slightly buggy still.</p>-->
         <main>
-            <h1>Editor</h1>
-            <p>By Adam Dally</p>
+            <div class="column">
+                <h1>Editor</h1>
+                <p>By Adam Dally</p>
+            </div>
         </main>
         <script type="text/javascript">
         'use strict';
@@ -186,64 +199,13 @@
             //el.contentEditable = true;
 
             //grouping elements ===> 'DIV'
-            var blockElements = ['MAIN', 'H1', 'P', 'DIV'],
+            var blockElements = ['MAIN', 'H1', 'P'],
                 inlineElements = ['SPAN', 'A'],
-                groupElements = [];
+                groupElements = ['DIV'];
 
             var clipboard = null;
 
-            var tests = {
-                'copy': {
-                    'html': 'Hello World',
-                    'selection': {
-                        'start': 0,
-                        'end': 11
-                    },
-                    'result': function(editor) {
-                        return editor.clipboard;
-                    },
-                    'wanted': 'Hello World'
-                },
-                'paste': {
-                    'init': function(editor) {
-                        editor.clipboard = "Hello World"
-                    },
-                    'wanted': '<main>Hello World</main>'
-                },
-                'bold': {
-                    'html': 'Hello World',
-                    'selection': {
-                        'start':0,
-                        'end':11
-                    },
-                    'wanted': '<main class="bold">Hello World</main>'
-
-                },
-                'italic': {
-                    'html': 'Hello World',
-                    'selection': {
-                        'start':0,
-                        'end':11
-                    },
-                    'wanted': '<main class="italic">Hello World</main>'
-                },
-                'column': {
-                    'html': 'Hello World',
-                    'selection': {
-                        'start': 0,
-                        'end': 11,
-                    },
-                    'wanted': '<main><div class="column">Hello World</div></main>'
-                },
-                /*'link': {
-                    'html': 'Hello World',
-                    'selection': {
-                        'start': 1,
-                        'end': 10,
-                    },
-                    'wanted': '<main>H<a href="http://google.com">ello Worl</a>d</main>'
-                }*/
-            };
+            var tests = {};
 
             var actions = {
                 'copy': {
@@ -252,7 +214,18 @@
                     },
                     'event': function(current) {
                         current.editor.clipboard = current.editor.selection.toString();
-                    }
+                    },
+                    'test': {
+                        'html': 'Hello World',
+                        'selection': {
+                            'start': 0,
+                            'end': 11
+                        },
+                        'result': function(editor) {
+                            return editor.clipboard;
+                        },
+                        'wanted': 'Hello World'
+                    },
                 },
                 'paste': {
                     'event': function(current) {
@@ -260,6 +233,12 @@
                         range.deleteContents();
                         range.insertNode(document.createTextNode(current.editor.clipboard));
 
+                    },
+                    'test':{
+                        'init': function(editor) {
+                            editor.clipboard = "Hello World"
+                        },
+                        'wanted': '<main>Hello World</main>'
                     }
                 },
                 'profile': {
@@ -293,21 +272,116 @@
                         var result = window.prompt("Web Address?", "http://google.com");
                         current.selection[0].node.href= result;
                     },
-                    'special': true
+                    'special': true,
+                    /*'test':{
+                        'html': 'Hello World',
+                        'selection': {
+                            'start': 1,
+                            'end': 10,
+                        },
+                        'wanted': '<main>H<a href="http://google.com">ello Worl</a>d</main>'
+                    }*/
                 },
                 'input' : {
                     'restricted': ['H1'],
                 },
                 'italic': {
                     'class': 'italic',
+                    'test': {
+                        'html': 'Hello World',
+                        'selection': {
+                            'start':0,
+                            'end':11
+                        },
+                        'wanted': '<main class="italic">Hello World</main>'
+                    },
                 },
                 'bold': {
                     'class': 'bold',
+                    'test':{
+                        'html': 'Hello World',
+                        'selection': {
+                            'start':0,
+                            'end':11
+                        },
+                        'wanted': '<main class="bold">Hello World</main>'
+
+                    }
+                },
+                'remove-column': {
+                    'event': function(current) {
+                        var node = current.selection[0].node;
+                        while (node.parentElement.tagName != "MAIN") {
+                            node = node.parentElement;
+                            if (node.classList.contains("column")) {
+                                if (node.previousSibling && node.classList.contains("column")) {
+                                    while (node.childNodes.length) {
+                                        node.previousSibling.appendChild(node.childNodes[0]);
+                                    }
+                                    node.parentElement.removeChild(node);
+                                }
+                                return;
+                            }
+                        }
+
+                    },
+                    'test': {
+                        'html':'<div class="column">Test</div>',
+                        'selection': {
+                            'start': 21,
+                            'end': 21,
+                        },
+                        'wanted':'<main></main>',
+                    }
                 },
                 'column': {
-                    'class': 'column',
-                    'element': 'DIV',
-                    'special': true
+                    'special': true,
+                    'event': function(current) {
+                        var groupEl, previousEl;
+                        var node = current.selection[0].node;
+                        console.log(current);
+                        if (current.selection[0].startOffset == current.selection[0].endOffset) {
+                            node.splitText(current.selection[0].startOffset);
+
+                        }
+                        //If selection covers multiple elements then column contents will be selection
+                        //additional columns will be before and after selection
+                        //this also implies that if the current selection spans multiple columns that those
+                        //will be deleted and new ones will be created.
+
+                        //otherwise if selection is condensed then split column at cursor
+                        groupEl = current.editor.parentType(current.selection[0].node,'group');
+                        current.editor.splitElement(groupEl, node);
+
+
+                    },
+                    'tests': [
+                        {
+                            'action':'column',
+                            'html': '<div class="column">Hello World</div>',
+                            'selection': {
+                                'start': 6,
+                                'end': 6,
+                            },
+                            'wanted': '<main><div class="column">Hello </div><div class="column">World</div></main>'
+                        },
+                        {
+                            'action':'column',
+                            'html': '<div class="column"><p>Hello World</p></div>',
+                            'selection': {
+                                'start': 6,
+                                'end': 6,
+                            },
+                            'wanted': '<main><div class="column"><p>Hello </p></div><div class="column"><p>World</p></div></main>'
+                        },
+                    ]
+                },
+                'column-width': {
+                    'input': 'select',
+                    'event': function(current){
+                        var groupEl = current.editor.parentType(current.selection[0].node, 'group');
+                        groupEl.style.flexBasis = current.action.value+"%";
+                    }
                 },
                 'font-weight': {
                     'attribute': 'font-weight',

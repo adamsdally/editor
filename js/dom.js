@@ -134,3 +134,65 @@ EditorPrototype.previousNode = function(el) {
     }
     return el;
 }
+
+EditorPrototype.parentType = function(el, type) {
+    switch (type) {
+        case 'group':
+            while(this.groupElements.indexOf(el.tagName) == -1) {
+                el = el.parentElement;
+                if (el.tagName == "MAIN")
+                    return false;
+            }
+            return el;
+            break;
+    }
+    return false;
+}
+/*
+
+div p-p p-text-!-text-p div
+go to top
+remember current though that is not quite top
+[div div] div p-p p-text-!-text-p div
+everything to the left of current needs moved
+[div p-p div] div p-text-!-text-p div
+
+*/
+
+
+EditorPrototype.splitElement = function(el, lastNode) {
+    var current,
+        clone,
+        prev = el.cloneNode(),
+        insertPoint = prev,
+        top = el;
+
+    //Loop until the explore point (top) is the same as the lastNode
+    while (lastNode.parentElement != top) {
+
+        //Explore from the lastNode up to the top with current.
+        current = lastNode;
+        while (current.parentElement != top) {
+            current = current.parentElement;
+        }
+
+        //Top is the new current
+        top = current;
+
+        //Everything to the left of the current needs inserted at the insert point
+        while (current.previousSibling) {
+            insertPoint.insertBefore(current.previousSibling, insertPoint.childNodes[0]);
+        }
+
+        //Clone current and insert at insertPoint, this is the new insertPoint
+        clone = current.cloneNode();
+        insertPoint.appendChild(clone);
+        insertPoint = clone;
+    }
+
+    //insert the lastNode;
+    insertPoint.appendChild(lastNode);
+
+    //Insert the entire thing before el
+    el.parentElement.insertBefore(prev, el);
+}

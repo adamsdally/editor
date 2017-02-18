@@ -14,7 +14,6 @@ EditorPrototype.resetControls = function() {
         current,
         node,
         part;
-    console.log(range);
 
     //Look through each select element and build a list of actions we need to determine.
     elements = this.controlsEl.getElementsByTagName('SELECT');

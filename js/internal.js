@@ -310,7 +310,6 @@ EditorPrototype.perform = function(action) {
         unapplyElements = [],
         combineElements = [];
 
-
     userSelection = saveSelection(this.el);
 
     currentSelection.forEach(function(current) {
@@ -413,6 +412,7 @@ EditorPrototype.perform = function(action) {
             selection: currentSelection,
             element: this.Element(this.el),
             editor: that,
+            action: action
         });
     }
 
@@ -426,10 +426,27 @@ EditorPrototype.test = function() {
     var action, test;
     var result,
         passed = 0,
-        failed = 0;
+        failed = 0,
+        i,
+        x;
     var save = this.el.innerHTML;
+    for (action in this.actions) {
+        console.log(action);
+        if (this.actions[action].test) {
+            this.tests[action] = this.actions[action].test;
+        }
+        if (this.actions[action].tests) {
+            for (i = 0;i<this.actions[action].tests.length;i++) {
+                x++;
+                this.tests[x] = this.actions[action].tests[i];
+            }
+        }
+    }
     for (action in this.tests) {
         test = this.tests[action];
+        if (test.action) {
+            action = test.action;
+        }
         console.log("Action: "+action);
         console.log(test);
 
@@ -447,6 +464,7 @@ EditorPrototype.test = function() {
             this.el,
             test.selection
         );
+
 
         //Run Action
         this.perform(this.actions[action]);
