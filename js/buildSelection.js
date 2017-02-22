@@ -18,9 +18,9 @@ EditorPrototype.buildSelection = function() {
 
     //If we're dealing with an empty element.
     if (!range.startContainer.textContent) {
-        /*currentSelection.push({
+        currentSelection.push({
             node:range.startContainer
-        });*/
+        });
         return currentSelection;
     }
 
@@ -48,9 +48,10 @@ EditorPrototype.buildSelection = function() {
             range.setStart(next, 0);
         }
     }
+    console.log(range);
 
     //If we're at the start of the endContainer then fix:
-    if (range.endOffset == 0) {
+     if (!next && range.endOffset == 0) {
         if (range.endContainer.previousSibling)
             previous = range.endContainer.previousSibling;
         else if (range.endContainer.parentElement.previousSibling)
@@ -65,6 +66,9 @@ EditorPrototype.buildSelection = function() {
         }
         console.log("going backwards");
     }
+
+
+
 
     //After fixing start and end conditions on range
     //copy containers to local variables to play with

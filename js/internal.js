@@ -54,7 +54,7 @@ EditorPrototype.isRestricted = function(current, action) {
 //-----Has Property---------
 //------------------------
 EditorPrototype.hasProperty = function(current, action, children) {
-    if (action.input) {
+    if (action.attribute) {
         if (current.style[action.attribute])
             return current.style[action.attribute];
     } else {
@@ -72,7 +72,7 @@ EditorPrototype.hasProperty = function(current, action, children) {
 EditorPrototype.removeProperty = function(current, action, recursive) {
     var i, next;
 
-    if (action.input) {
+    if (action.attribute) {
         if (current.style[action.attribute])
             current.style[action.attribute] = "";
     } else {
@@ -109,7 +109,7 @@ EditorPrototype.checkType = function(element) {
 EditorPrototype.transferProperty = function(startElement, finishElement, action) {
     console.log(startElement.outerHTML);
     console.log(finishElement.outerHTML);
-    if (action.input) {
+    if (action.attribute) {
         console.log(action.attribute);
         finishElement.style[action.attribute] = startElement.style[action.attribute];
         startElement.style[action.attribute] = "";
@@ -180,6 +180,8 @@ EditorPrototype.combineSibling = function(leftElement, rightElement, action) {
 //-----Try to Combine---------
 //------------------------
 EditorPrototype.tryToCombine = function(element, action) {
+    console.log("Trying to combine");
+    console.log(element.outerHTML);
     var sibling = true,
         previous,
         parent,
@@ -225,37 +227,36 @@ EditorPrototype.tryToCombine = function(element, action) {
 
     //Go Upwards
     //the variable go determines whether or not we should try to go upwards
-    //by seeing if the parent does not have a class AND style
-    //or by seeing if the parents class and style matches all children
-    //if so then try to remove the parent and recombine
+    //by seeing if the parent has only one child element
     //
-    //if go is false then see if if we only have one child
-    //if so then absorb that child
+    //this bit needs consolidated a tad bit further as it is definitely redundant.
     go = true;
-    if (element.tagName == 'MAIN' || parent.tagName== 'MAIN')
+    if (element.tagName == 'MAIN' || parent.tagName== 'MAIN' || parent.childElementCount > 1)
         go = false;
-    else if (parent.style.cssText != "" || parent.className != "") {
-        for (i=0; i<parent.children.length; i++) {
-            if (parent.style.cssText != parent.children[i].style.cssText
-                || parent.className != parent.children[i].className
-               ) {
-                go = false;
-            }
-        }
-    }
     if (go) {
+        console.log("Going up!")
         if (this.tryToRemove(element.parentElement))
             this.tryToCombine(element, action); //?should this also combine last child of former parent?
+        else {
+            parent.style.cssText += element.style.cssText;
+            parent.className += " "+element.className;
+            element.style = "";
+            element.className = "";
+            this.tryToRemove(element);
+            this.tryToCombine(parent, action);
+        }
     } else if (parent.childElementCount == 1) {
-        if (parent.childNodes.length == 1
+        if ((parent.childNodes.length == 1)
             || (!parent.firstChild.textContent.trim()  && !parent.lastChild.textContent.trim())
         ) {
             for (i=0; i<element.style.length; i++) {
                 parent.style[element.style[i]]=element.style[element.style[i]];
             }
             parent.cssName += element.cssName;
-
-            this.removeParentElement(element);
+            element.removeAttribute("style");
+            console.log("removing");
+            if (!this.isSpecial(parent.firstElementChild))
+                this.removeParentElement(element);
             this.tryToCombine(parent, action);
 
         }
@@ -269,10 +270,16 @@ EditorPrototype.tryToCombine = function(element, action) {
 //-----Is Special----------
 //-------------------------
 EditorPrototype.isSpecial = function(element) {
+    if (element.nodeType == 3) {
+        return false;
+    }
     if (element.tagName == 'A') {
         return true;
     }
     if (element.classList.contains("column"))
+        return true;
+
+    if (element.classList.contains("profile"))
         return true;
 }
 
@@ -381,11 +388,11 @@ EditorPrototype.perform = function(action) {
     });
 
     this.l('Preparing');
-
     applyElements.forEach(function(current) {
         current = that.apply(current , action, true);
     });
 
+    console.log(unapplyElements);
     unapplyElements.forEach(function(current) {
         that.removeProperty(current, action, false);
     });
@@ -400,11 +407,14 @@ EditorPrototype.perform = function(action) {
     });
     if (combineElements.length) {
         this.l('Combining');
+        console.log(combineElements);
     }
 
     this.el.normalize();
 
     restoreSelection(this.el, userSelection);
+
+
     currentSelection = this.buildSelection();
 
     if (action.event) {
@@ -418,6 +428,8 @@ EditorPrototype.perform = function(action) {
 
     //if (action.maintainSelection || action.maintainSelection == null)
       //  restoreSelection(this.el, userSelection);
+    this.el.focus();
+    this.resetControls();
 }
 
 EditorPrototype.test = function() {

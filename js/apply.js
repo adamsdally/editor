@@ -6,7 +6,7 @@ var EditorPrototype = window.EditorPrototype || {};
 //-------------------------
 EditorPrototype.apply = function(node, action, removeFromChildren) {
     var nextNode, i, type;
-
+    console.log(action);
     if (node.nodeType == 3) {
         if (node.nodeValue.trim())
             node = this.createParentElement(node, 'SPAN');
@@ -40,8 +40,13 @@ EditorPrototype.apply = function(node, action, removeFromChildren) {
     }
     console.log(node.outerHTML);
 
-    if (action.input)
-        node.style[action.attribute] =  action.value;
+    if (action.input || action.binary) {
+        if (action.value)
+            node.style[action.attribute] =  action.value;
+        else
+            node.style[action.attribute] = "";
+
+    }
 
     if (action.class)
         node.classList.toggle(action['class'], true);

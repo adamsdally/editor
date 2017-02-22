@@ -1,16 +1,23 @@
+//Does not currently take into account empty elements, such as an empty paragraph that is maintaining the cursor
+
 var saveSelection, restoreSelection;
 
 if (window.getSelection && document.createRange) {
     saveSelection = function(containerEl) {
+
         var range = window.getSelection().getRangeAt(0);
         var preSelectionRange = range.cloneRange();
         preSelectionRange.selectNodeContents(containerEl);
+        console.log(preSelectionRange.toString());
+
+        console.log(containerEl.getElementsByTagName('BR'));
         preSelectionRange.setEnd(range.startContainer, range.startOffset);
         var start = preSelectionRange.toString().length;
 
         return {
             start: start,
-            end: start + range.toString().length
+            end: start + range.toString().length,
+            atBeginning:(range.startOffset == 0)?true:false
         };
     };
 
@@ -18,14 +25,18 @@ if (window.getSelection && document.createRange) {
         var charIndex = 0, range = document.createRange();
         range.setStart(containerEl, 0);
         range.collapse(true);
-        var nodeStack = [containerEl], node, foundStart = false, stop = false;
+        var nodeStack = [containerEl], node, foundStart = false, stop = false, pass=savedSel.atBeginning;
 
         while (!stop && (node = nodeStack.pop())) {
             if (node.nodeType == 3) {
                 var nextCharIndex = charIndex + node.length;
                 if (!foundStart && savedSel.start >= charIndex && savedSel.start <= nextCharIndex) {
-                    range.setStart(node, savedSel.start - charIndex);
-                    foundStart = true;
+                    if (pass) {
+                        pass=false;
+                    } else {
+                        range.setStart(node, savedSel.start - charIndex);
+                        foundStart = true;
+                    }
                 }
                 if (foundStart && savedSel.end >= charIndex && savedSel.end <= nextCharIndex) {
                     range.setEnd(node, savedSel.end - charIndex);

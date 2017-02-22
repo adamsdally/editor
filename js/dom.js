@@ -42,11 +42,26 @@ EditorPrototype.insert = function(node) {
 
     //Switch based on the node type we're trying to insert
     console.log(range);
+
     var type = this.checkType(node);
     var current = range.endContainer;
+    var currentType;
     if (type == 'block') {
         while (this.checkType(current)!=type ) {
             current = current.parentElement;
+        }
+        current.parentElement.insertBefore(node,current.nextElementSibling);
+        return;
+    } else if (type == 'group') {
+        currentType = this.checkType(current);
+        while (currentType != type) {
+            if (!this.isSpecial(current.parentElement)) {
+                current = current.parentElement;
+                currentType = this.checkType(current);
+            }
+            else {
+                currentType = type;
+            }
         }
         current.parentElement.insertBefore(node,current.nextElementSibling);
         return;
@@ -167,6 +182,20 @@ EditorPrototype.splitElement = function(el, lastNode) {
         insertPoint = prev,
         top = el;
 
+    //Get out of any special elements
+    current = lastNode;
+    while (current.parentElement != top) {
+        current = current.parentElement;
+        if (this.isSpecial(current)) {
+            lastNode = current;
+        }
+    }
+    console.log(current);
+    console.log(lastNode);
+    console.log(el);
+    //if (lastNode)
+      //  return false;
+
     //Loop until the explore point (top) is the same as the lastNode
     while (lastNode.parentElement != top) {
 
@@ -188,6 +217,10 @@ EditorPrototype.splitElement = function(el, lastNode) {
         clone = current.cloneNode();
         insertPoint.appendChild(clone);
         insertPoint = clone;
+    }
+
+    while (lastNode.previousSibling) {
+        insertPoint.insertBefore(lastNode.previousSibling, insertPoint.childNodes[0]);
     }
 
     //insert the lastNode;

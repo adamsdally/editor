@@ -34,11 +34,11 @@ EditorPrototype.start = function(config) {
 
 
         console.log('select function');
-        /*if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
+        if (range.startContainer && that.isRestricted(range.startContainer, that.actions.input))
             editable = false;
         else
             editable = true;
-        if (editable)*/
+        /*if (editable)*/
             that.resetControls();
     }
 
@@ -89,6 +89,11 @@ EditorPrototype.start = function(config) {
             }
         }
 
+        if (e.code == 'Enter') {
+            //e.preventDefault();
+            //document.execCommand('insertHTML', false, '<p>&nbsp;</p>')
+        }
+
 
         //if backspace or delete aren't pressed then return;
         if ([8,46].indexOf(e.keyCode)==-1)
@@ -130,6 +135,7 @@ EditorPrototype.start = function(config) {
 
     });
 
+
     this.el.addEventListener('keyup', function(e) {
         var range;
         range = that.selection.getRangeAt(0);
@@ -158,15 +164,28 @@ EditorPrototype.start = function(config) {
         var action = null;
         e.preventDefault();
 
-        if (e.target.tagName != 'A')
+        var target = e.target;
+
+        while (!target.dataset['action'] && target != that.controlsEl) {
+            target = target.parentElement;
+        }
+
+        if (target.tagName != 'A')
             return false;
 
         that.l("Click", true);
 
-        if (e.target.dataset['action'] && that.actions[e.target.dataset['action']])
-                action = that.actions[e.target.dataset['action']];
+        if (target.dataset['action'] && that.actions[target.dataset['action']])
+                action = that.actions[target.dataset['action']];
         else
             return false;
+
+        if (action.binary) {
+            if (target.classList.contains("selected"))
+                action.value = false;
+            else
+                action.value = target.dataset['value'];
+        }
 
         that.perform(action);
 
@@ -191,6 +210,8 @@ EditorPrototype.start = function(config) {
         if (action.input)
             action.value = e.target.options[e.target.selectedIndex].value;
 
+
+
         that.perform(action);
         that.changeEvent();
     });
@@ -200,8 +221,11 @@ EditorPrototype.start = function(config) {
 
     if (this.config.debug) {
         var debugEl = document.createElement('ARTICLE');
+        debugEl.className = "invisible";
         this.el.parentElement.insertBefore(debugEl, null);
     }
+
+    console.log(this);
 
     /*document.getElementsByClassName('dragging')[0].addEventListener('click', function(e) {
         draggable = !draggable;
@@ -212,6 +236,32 @@ EditorPrototype.start = function(config) {
             e.target.innerHTML = "Dragging Off";
         }
     });*/
-    this.test();
+
+    var elements, i, valueAction;
+    //Look through each select element and build a list of actions we need to determine.
+    elements = this.controlsEl.getElementsByTagName('SELECT');
+    for (i=0; i<elements.length; i++) {
+        if (elements[i].dataset['action'] && this.actions[elements[i].dataset['action']]) {
+            valueAction = this.actions[elements[i].dataset['action']];
+            valueAction.elements = valueAction.elements || [];
+            valueAction.elements.push(elements[i]);
+            valueAction.values = [];
+        }
+    }
+
+    //Look through each link element with class binary and build a list of links we need to determine.
+    elements = this.controlsEl.getElementsByClassName('binary');
+    for (i=0; i<elements.length; i++) {
+        if (elements[i].dataset['action'] && this.actions[elements[i].dataset['action']]) {
+            valueAction = this.actions[elements[i].dataset['action']];
+            valueAction.elements = valueAction.elements || [];
+            valueAction.elements.push(elements[i]);
+            valueAction.values = [];
+            //valueAction.options = valueAction.options || [];
+            //valueAction.options.push(elements[i].dataset['value']);
+        }
+    }
+
+    //this.test();
     this.el.contentEditable = true;
 }

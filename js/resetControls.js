@@ -6,23 +6,23 @@
 EditorPrototype.resetControls = function() {
     var range = this.selection.getRangeAt(0),
         elements = null,
-        currentSelection = this.buildSelection(range),
+        currentSelection = this.buildSelection(),
         i,
         x,
+        action,
         valueAction,
         valueActions = [],
         current,
         node,
+        element,
         part;
 
-    //Look through each select element and build a list of actions we need to determine.
-    elements = this.controlsEl.getElementsByTagName('SELECT');
-    for (i=0; i<elements.length; i++) {
-        if (elements[i].dataset['action'] && this.actions[elements[i].dataset['action']]) {
-            valueAction = this.actions[elements[i].dataset['action']];
-            valueAction.select = elements[i];
-            valueAction.values = [];
-            valueActions.push(valueAction);
+    //Build valueActions array
+    for (action in this.actions) {
+        if (this.actions[action].elements) {
+
+            valueActions.push(this.actions[action]);
+            this.actions[action].values = [];
         }
     }
 
@@ -48,8 +48,8 @@ EditorPrototype.resetControls = function() {
         while (true) {
             for (i=0; i<valueActions.length; i++) {
                 if (valueActions[i].attribute && node.style[valueActions[i].attribute]) {
-                    valueActions[i].values.push( node.style[valueActions[i].attribute]);
-                    valueActions[i].empty = false;
+                        valueActions[i].values.push( node.style[valueActions[i].attribute]);
+                        valueActions[i].empty = false;
                 }
             }
             if (node.tagName == "MAIN")
@@ -59,10 +59,12 @@ EditorPrototype.resetControls = function() {
 
         //The actions which are empty for this element need to be pushed onto the valuess
         for (i=0; i<valueActions.length; i++) {
+
             if (valueActions[i].empty)
                 valueActions[i].values.push("");
         }
     }
+
 
     //Set controls based on values.
     for (i=0; i < valueActions.length; i++) {
@@ -77,11 +79,24 @@ EditorPrototype.resetControls = function() {
         } else {
             valueAction.values.unshift("");
         }
-        for(x = 0; x < valueAction.select.options.length; ++x) {
-            if(valueAction.select.options[x].value === valueAction.values[0]) {
-                valueAction.select.selectedIndex = x;
-                break;
+
+        for (x=0; x< valueAction.elements.length; x++) {
+            element = valueAction.elements[x];
+
+            if (element.tagName == 'SELECT') {
+                for(x = 0; x < element.options.length; ++x) {
+                    if(element.options[x].value === valueAction.values[0]) {
+                        element.selectedIndex = x;
+                        break;
+                    }
+                }
+            } else {
+                if (element.dataset['value']==valueAction.values[0])
+                    element.classList.toggle('selected', true);
+                else
+                    element.classList.toggle('selected', false);
             }
+
         }
     }
 }

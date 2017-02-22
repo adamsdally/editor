@@ -10,7 +10,6 @@
             }
             main {
                 padding:32px;
-                padding-top:92px;
                 display: flex;
                 flex-wrap:wrap;
                 outline:0px;
@@ -27,20 +26,39 @@
                 background-color:#444;
                 color:white;
                 border-bottom:2px solid black;
-                position:fixed;
                 top:0px;
                 left:0px;
                 width:100%;
                 z-index:1000;
                 display:flex;
+                align-items:center;
+                justify-content: flex-start;
+                box-sizing: border-box;
+                flex-wrap: wrap;
+            }
+            nav .input {
+                margin-left:10px;
+                margin-right:10px;
+                display:flex;
+                flex-wrap:wrap;
+                justify-content: center;
+            }
+            nav label {
+                flex-basis:100%;
+                text-align: center;
+                margin-bottom:8px;
+            }
+            nav .group {
+                align-items: center;
+                display: flex;
+                margin-right: 20px;
             }
             nav a {
                 color:white;
                 text-decoration: none;
-                margin-right:20px;
-            }
-            nav select {
-                margin-right:20px;
+                margin-left:10px;
+                margin-right:10px;
+                border-bottom:2px solid #444;
             }
             nav .powered {
                 font-weight:bold;
@@ -53,16 +71,17 @@
                 font-style:italic;
             }
             .column {
-                border:1px dashed gray;
                 padding:20px;
                 flex-basis:100%;
                 box-sizing: border-box;
+            }
+            .edit .column {
+                border:1px dashed gray;
             }
             article {
                 margin:20px;
                 padding:20px;
                 border:1px solid black;
-                visibility: hidden;
             }
             .title {
                 display:flex;
@@ -94,6 +113,30 @@
                 flex-grow:1;
                 font-size:1.2em;
             }
+            .selected {
+                border-bottom:2px solid white;
+            }
+            .color {
+                height:32px;
+                width:32px;
+
+                box-sizing: border-box;
+            }
+            .color.selected {
+            }
+            #edit {
+                position:fixed;
+                right:0px;
+                top:0px;
+                padding:20px;
+                background-color:#444;
+            }
+            #edit a{
+                color:white;
+            }
+            .invisible {
+                display:none;
+            }
 
         </style>
         <script type="text/javascript" src="js/maintainSelection.js"></script>
@@ -103,7 +146,7 @@
         <script type="text/javascript" src="js/dom.js"></script>
         <script type="text/javascript" src="js/events.js"></script>
         <script type="text/javascript" src="js/internal.js"></script>
-        <script type="text/javascript" src="js/external.js"></script>
+        <script type="text/javascript" src="js/start.js"></script>
         <script type="text/javascript" src="js/editor.js"></script>
         <script type="text/javascript" src="js/apply.js"></script>
         <script type="text/javascript" src="js/resetControls.js"></script>
@@ -116,72 +159,82 @@
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
-        <nav>
+        <div id = "edit"><a href="" id="editLink">Edit</a>
+        <a href="" id="debugLink">Debug</a></div>
+        <nav class="invisible">
             <!--<a href="" class="b-bold" data-action="bold">Bold</a>
-            <a href="" class="b-strong" data-action="italic">Italic</a>-->
             <!--<a href="" data-action="copy">Copy</a>
             <a href="" data-action="paste">Paste</a>-->
-            <a href="" data-action="link">Link</a>
-            <a href="" data-action="profile">Profile</a>
-            <a href="" data-action="column">Column</a>
-            <a href="" data-action="remove-column">Remove Column</a>
-            <label>Font Style:</label>
-            <select data-action="font-style" name="font-style">
-                <option value=""></option>
-                <option value="italic">Italic</option>
-            </select>
-            <label>Font Weight:</label>
-            <select data-action="font-weight" name="font-weight">
-                <option value=""></option>
-                <option value="bold">Bold</option>
-            </select>
-            <label>Font Size:</label>
-            <select data-action="font-size" name="font-size">
-                <option value=""></option>
-                <option value="12px">12px</option>
-                <option value="16px">16px</option>
-                <option value="20px">20px</option>
-                <option value="24px">24px</option>
-                <option value="28px">28px</option>
-                <option value="32px">32px</option>
-                <option value="36px">36px</option>
-                <option value="40px">40px</option>
-                <option value="44px">44px</option>
-                <option value="48px">48px</option>
-                <option value="52px">52px</option>
-                <option value="56px">56px</option>
-                <option value="60px">60px</option>
-                <option value="64px">64px</option>
-            </select>
-            <label>Font Family:</label>
-            <select data-action="font-family" name="font-family">
-                <option value=""></option>
-                <option value="Arial">Arial</option>
-                <option value="Comic Sans MS">Comic Sans MS</option>
-                <option value="Times New Roman">Times New Roman</option>
-                <option value="Lucida Console">Lucida Console</option>
-                <option value="Impact">Impact</option>
-            </select>
-            <label>Color:</label>
-            <select data-action="color" name="color">
-                <option value=""></option>
-                <option value="black">Black</option>
-                <option value="blue">Blue</option>
-                <option value="red">Red</option>
-                <option value="green">Green</option>
-                <option value="yellow">Yellow</option>
-            </select>
-            <label>Width:</label>
-            <select data-action="column-width" name="column-width">
-                <option value=""></option>
-                <option value="100">100%</option>
-                <option value="75">75%</option>
-                <option value="66.66">66%</option>
-                <option value="50">50%</option>
-                <option value="33.33">33%</option>
-                <option value="25">25%</option>
-            </select>
+            <div class="group">
+            <div class="group">
+                <a href="" class="binary" data-action="bold" data-value="bold"><img src="png/bold_white.png" /></a>
+                <a href="" class="binary" data-action="italic" data-value="italic"><img src="png/italic_white.png" /></a>
+                <a href="" class="binary" data-action="underline" data-value="underline"><img src="png/underline_white.png" /></a>
+            </div>
+            <div class="group">
+                <div class="input">
+                    <label><img src="png/text-label_white.png" /></label>
+                    <select data-action="font-family" name="font-family">
+                        <option value=""></option>
+                        <option value="Arial">Arial</option>
+                        <option value="Comic Sans MS">Comic Sans MS</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Lucida Console">Lucida Console</option>
+                        <option value="Impact">Impact</option>
+                    </select>
+                </div>
+                <div class="input">
+                    <label><img src="png/text-height_white.png" /></label>
+                    <select data-action="font-size" name="font-size">
+                        <option value=""></option>
+                        <option value="12px">12px</option>
+                        <option value="16px">16px</option>
+                        <option value="20px">20px</option>
+                        <option value="24px">24px</option>
+                        <option value="28px">28px</option>
+                        <option value="32px">32px</option>
+                        <option value="36px">36px</option>
+                        <option value="40px">40px</option>
+                        <option value="44px">44px</option>
+                        <option value="48px">48px</option>
+                        <option value="52px">52px</option>
+                        <option value="56px">56px</option>
+                        <option value="60px">60px</option>
+                        <option value="64px">64px</option>
+                    </select>
+                </div>
+            </div>
+            </div>
+            <div class="group">
+            <div class="group">
+                <a href="" data-action="link"><img src="png/link_white.png" /></a>
+                <a href="" data-action="profile"><img src="png/user-card_white.png" /></a>
+            </div>
+            <div class="group">
+                <a href="" class="binary color" data-action="color" data-value="red" style="background-color:red"></a>
+                <a href="" class="binary color" data-action="color" data-value="blue" style="background-color:blue"></a>
+                <a href="" class="binary color" data-action="color" data-value="green" style="background-color:green"></a>
+                <a href="" class="binary color" data-action="color" data-value="yellow" style="background-color:yellow"></a>
+                <a href="" class="binary color" data-action="color" data-value="black" style="background-color:black"></a>
+            </div>
+            <div class="group">
+                <div class="input">
+                <label><img src="png/split_white.png" /></label>
+                <a href="" data-action="column"><img src="png/plus-circle_white.png" /></a>
+                <a href="" data-action="remove-column"><img src="png/minus-circle-1_white.png" /></a>
+                    <select data-action="column-width" name="column-width">
+                        <option value=""></option>
+                        <option value="100">100%</option>
+                        <option value="75">75%</option>
+                        <option value="66.66">66%</option>
+                        <option value="50">50%</option>
+                        <option value="33.33">33%</option>
+                        <option value="25">25%</option>
+                    </select>
+                </div>
+            </div>
             <!--<a href="" data-action="blueBorder">Blue Border</a>-->
+            </div>
         </nav>
         <main>
             <div class="column">
@@ -245,21 +298,25 @@
                     'event': function(current) {
                         //First make sure we are not in a profile, this may or may not be the permanent location for such code
                         //editor maybe should send out class or elements above, unknown
-
+                        console.log(current);
+                        console.log(current.editor.selection);
                         var node = current.selection[0].node;
                         while (node.parentElement.tagName != "MAIN") {
                             node = node.parentElement;
+                            console.log(node);
                             if (node.classList.contains("profile")) {
                                 node.parentElement.removeChild(node);
                                 return;
                             }
                         }
+                        console.log(current.editor.selection);
+                        console.log(node);
 
                         var div = document.createElement('DIV');
                         div.innerHTML = "<img /><h1>Susan Willis</h1><p>Susan is a great worker at our company. She has been in the business for over 70 yeras and brings along her 17 children. Each of them does a great job as well. Next month will be her birthday and we are ever excieted. Possibly the best employee ever.</p>";
                         div.className = "profile";
                         var ed = document.createElement('P');
-                        ed.innerHTML = "<br>"
+                        ed.innerHTML = "<br/>"
                         current.editor.insert(ed);
                         current.editor.insert(div);
                     }
@@ -285,8 +342,13 @@
                 'input' : {
                     'restricted': ['H1'],
                 },
+                'underline' : {
+                    'binary':true,
+                    'attribute': 'text-decoration',
+                },
                 'italic': {
-                    'class': 'italic',
+                    'binary':true,
+                    'attribute': 'font-style',
                     'test': {
                         'html': 'Hello World',
                         'selection': {
@@ -297,7 +359,8 @@
                     },
                 },
                 'bold': {
-                    'class': 'bold',
+                    'binary': true,
+                    'attribute': 'font-weight',
                     'test':{
                         'html': 'Hello World',
                         'selection': {
@@ -351,6 +414,9 @@
 
                         //otherwise if selection is condensed then split column at cursor
                         groupEl = current.editor.parentType(current.selection[0].node,'group');
+                        while (!groupEl.classList.contains("column")) {
+                            groupEl = groupEl.parentElement;
+                        }
                         current.editor.splitElement(groupEl, node);
 
 
@@ -378,6 +444,7 @@
                 },
                 'column-width': {
                     'input': 'select',
+                    //'attribute': 'flex-basis',
                     'event': function(current){
                         var groupEl = current.editor.parentType(current.selection[0].node, 'group');
                         groupEl.style.flexBasis = current.action.value+"%";
@@ -402,7 +469,8 @@
                 },
                 'color': {
                     'attribute': 'color',
-                    'input': 'select',
+                    //'input': 'select',
+                    'binary':true,
                 },
             };
 
@@ -420,6 +488,16 @@
                 onChange: function(e) {
                     //console.log(e);
                 }
+            });
+            document.getElementById('editLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                console.log("edit");
+                document.getElementsByTagName('nav')[0].classList.toggle('invisible');
+                document.getElementsByTagName('main')[0].classList.toggle('edit');
+            });
+            document.getElementById('debugLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                document.getElementsByTagName('article')[0].classList.toggle('invisible');
             });
 
            })();
