@@ -13,7 +13,12 @@
                 display: flex;
                 flex-wrap:wrap;
                 outline:0px;
+                font-size:18px;
+                line-height: 2em;
 
+            }
+            main.edit {
+                margin-top:124px;
             }
             h1, h2, h3, strong {
                 font-weight: inherit;
@@ -35,6 +40,7 @@
                 justify-content: flex-start;
                 box-sizing: border-box;
                 flex-wrap: wrap;
+                position:fixed;
             }
             nav .input {
                 margin-left:10px;
@@ -130,12 +136,18 @@
                 top:0px;
                 padding:20px;
                 background-color:#444;
+                z-index: 10010;
             }
             #edit a{
                 color:white;
             }
             .invisible {
                 display:none;
+            }
+            @media all and (max-width: 1240px) {
+              main.edit {
+                margin-top:200px;
+              }
             }
 
         </style>
@@ -152,94 +164,106 @@
         <script type="text/javascript" src="js/resetControls.js"></script>
         <script type="text/javascript" src="js/getApplyableElementsInParent.js"></script>
 
-
-        <!--
-        <script type="text/javascript" src="editor.min.js"></script>
--->
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
         <div id = "edit"><a href="" id="editLink">Edit</a>
         <a href="" id="debugLink">Debug</a></div>
         <nav class="invisible">
-            <!--<a href="" class="b-bold" data-action="bold">Bold</a>
             <!--<a href="" data-action="copy">Copy</a>
             <a href="" data-action="paste">Paste</a>-->
             <div class="group">
-            <div class="group">
-                <a href="" class="binary" data-action="bold" data-value="bold"><img src="png/bold_white.png" /></a>
-                <a href="" class="binary" data-action="italic" data-value="italic"><img src="png/italic_white.png" /></a>
-                <a href="" class="binary" data-action="underline" data-value="underline"><img src="png/underline_white.png" /></a>
-            </div>
-            <div class="group">
-                <div class="input">
-                    <label><img src="png/text-label_white.png" /></label>
-                    <select data-action="font-family" name="font-family">
-                        <option value=""></option>
-                        <option value="Arial">Arial</option>
-                        <option value="Comic Sans MS">Comic Sans MS</option>
-                        <option value="Times New Roman">Times New Roman</option>
-                        <option value="Lucida Console">Lucida Console</option>
-                        <option value="Impact">Impact</option>
-                    </select>
+                <div class="group">
+                    <a href="" class="binary" data-action="bold" data-value="bold"><img src="png/bold_white.png" /></a>
+                    <a href="" class="binary" data-action="italic" data-value="italic"><img src="png/italic_white.png" /></a>
+                    <a href="" class="binary" data-action="underline" data-value="underline"><img src="png/underline_white.png" /></a>
                 </div>
-                <div class="input">
-                    <label><img src="png/text-height_white.png" /></label>
-                    <select data-action="font-size" name="font-size">
-                        <option value=""></option>
-                        <option value="12px">12px</option>
-                        <option value="16px">16px</option>
-                        <option value="20px">20px</option>
-                        <option value="24px">24px</option>
-                        <option value="28px">28px</option>
-                        <option value="32px">32px</option>
-                        <option value="36px">36px</option>
-                        <option value="40px">40px</option>
-                        <option value="44px">44px</option>
-                        <option value="48px">48px</option>
-                        <option value="52px">52px</option>
-                        <option value="56px">56px</option>
-                        <option value="60px">60px</option>
-                        <option value="64px">64px</option>
-                    </select>
-                </div>
-            </div>
-            </div>
-            <div class="group">
-            <div class="group">
-                <a href="" data-action="link"><img src="png/link_white.png" /></a>
-                <a href="" data-action="profile"><img src="png/user-card_white.png" /></a>
-            </div>
-            <div class="group">
-                <a href="" class="binary color" data-action="color" data-value="red" style="background-color:red"></a>
-                <a href="" class="binary color" data-action="color" data-value="blue" style="background-color:blue"></a>
-                <a href="" class="binary color" data-action="color" data-value="green" style="background-color:green"></a>
-                <a href="" class="binary color" data-action="color" data-value="yellow" style="background-color:yellow"></a>
-                <a href="" class="binary color" data-action="color" data-value="black" style="background-color:black"></a>
-            </div>
-            <div class="group">
-                <div class="input">
-                <label><img src="png/split_white.png" /></label>
-                <a href="" data-action="column"><img src="png/plus-circle_white.png" /></a>
-                <a href="" data-action="remove-column"><img src="png/minus-circle-1_white.png" /></a>
-                    <select data-action="column-width" name="column-width">
-                        <option value=""></option>
-                        <option value="100">100%</option>
-                        <option value="75">75%</option>
-                        <option value="66.66">66%</option>
-                        <option value="50">50%</option>
-                        <option value="33.33">33%</option>
-                        <option value="25">25%</option>
-                    </select>
+                <div class="group">
+                    <div class="input">
+                        <label><img src="png/text-label_white.png" /></label>
+                        <select data-action="font-family" name="font-family">
+                            <option value=""></option>
+                            <option value="Arial">Arial</option>
+                            <option value="Comic Sans MS">Comic Sans MS</option>
+                            <option value="Times New Roman">Times New Roman</option>
+                            <option value="Lucida Console">Lucida Console</option>
+                            <option value="Impact">Impact</option>
+                        </select>
+                    </div>
+                    <div class="input">
+                        <label><img src="png/text-height_white.png" /></label>
+                        <select data-action="font-size" name="font-size">
+                            <option value=""></option>
+                            <option value="12px">12px</option>
+                            <option value="16px">16px</option>
+                            <option value="20px">20px</option>
+                            <option value="24px">24px</option>
+                            <option value="28px">28px</option>
+                            <option value="32px">32px</option>
+                            <option value="36px">36px</option>
+                            <option value="40px">40px</option>
+                            <option value="44px">44px</option>
+                            <option value="48px">48px</option>
+                            <option value="52px">52px</option>
+                            <option value="56px">56px</option>
+                            <option value="60px">60px</option>
+                            <option value="64px">64px</option>
+                        </select>
+                    </div>
                 </div>
             </div>
-            <!--<a href="" data-action="blueBorder">Blue Border</a>-->
+            <div class="group">
+                <div class="group">
+                    <a href="" data-action="link"><img src="png/link_white.png" /></a>
+                    <a href="" data-action="profile"><img src="png/user-card_white.png" /></a>
+                </div>
+                <div class="group">
+                    <a href="" class="binary color" data-action="color" data-value="red" style="background-color:red"></a>
+                    <a href="" class="binary color" data-action="color" data-value="blue" style="background-color:blue"></a>
+                    <a href="" class="binary color" data-action="color" data-value="green" style="background-color:green"></a>
+                    <a href="" class="binary color" data-action="color" data-value="yellow" style="background-color:yellow"></a>
+                    <a href="" class="binary color" data-action="color" data-value="black" style="background-color:black"></a>
+                </div>
+                <div class="group">
+                    <div class="input">
+                    <label><img src="png/split_white.png" /></label>
+                    <a href="" data-action="column"><img src="png/plus-circle_white.png" /></a>
+                    <a href="" data-action="remove-column"><img src="png/minus-circle-1_white.png" /></a>
+                        <select data-action="column-width" name="column-width">
+                            <option value=""></option>
+                            <option value="100">100%</option>
+                            <option value="75">75%</option>
+                            <option value="66.66">66%</option>
+                            <option value="50">50%</option>
+                            <option value="33.33">33%</option>
+                            <option value="25">25%</option>
+                        </select>
+                    </div>
+                </div>
             </div>
         </nav>
-        <main>
+        <main style="font-family:arial;">
             <div class="column">
-                <h1>Editor</h1>
-                <p>By Adam Dally</p>
+                <h1 style="font-weight:bold; font-size:48px;">Editor</h1>
+                <p style="font-size:32px;">By Adam Dally</p>
+                <p><a href="https://github.com/adamsdally/editor">View on Github</a></p>
+                <p>This is the start to my full blown WYSIWYG HTML text editor. It packs (or will pack) all of the useful features expected from modern editors but their implementation and the editor's complete extensibility are unique to itself.</p>
+                <h2>Try Editing</h2>
+                <ol>
+                    <li>Show the edit controls by clicking edit in the top right of the page.</li>
+                    <li>
+                        <ol>
+                            <li>Place the cursor somewhere in the content and hit the + icon. You should see the entire content split at the cursor point. Wow!</li>
+                            <li>This is part of the column (layout) actions. Try clicking in each dotted rectangle and change the dropdown to the right of + and - to 50% respectively. The power!</li>
+                            <li>Continue playing around to create complex layouts. The - can be used to merge a column with the one before it.</li>
+                        </ol>
+                    </li>
+                    <li>Now put the cursor at the end of some text and hit the profile control (to the left of the colors). A profile box will appear to place someones profile details with filler/test text in place.</li>
+                    <li>Try modifying the word Editor at the top. I bet you can change the style but not the content...bet that could be useful.</li>
+                    <li>Try the other controls! View the output with the debug tool in the top right.</li>
+                </ol>
+                <p style="font-style:italic;">Not all actions are implmented or working to their design intent and core functionionality has yet to be rigourlsly tested for all use cases. See the github for more information.</p>
+                <p style="font-style:italic;">Icons designed by Vaadin from Flaticon</p>
             </div>
         </main>
         <script type="text/javascript">
@@ -494,6 +518,12 @@
                 console.log("edit");
                 document.getElementsByTagName('nav')[0].classList.toggle('invisible');
                 document.getElementsByTagName('main')[0].classList.toggle('edit');
+                if (document.getElementsByTagName('main')[0].classList.contains('edit')) {
+                    document.getElementsByTagName('main')[0].contentEditable = true;
+                } else {
+                    document.getElementsByTagName('main')[0].contentEditable = false;
+
+                }
             });
             document.getElementById('debugLink').addEventListener('click', function(e) {
                 e.preventDefault();

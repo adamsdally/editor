@@ -263,5 +263,5 @@ EditorPrototype.start = function(config) {
     }
 
     //this.test();
-    this.el.contentEditable = true;
+    //this.el.contentEditable = true;
 }
