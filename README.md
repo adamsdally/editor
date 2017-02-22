@@ -5,6 +5,10 @@ By Adam Dally
 
 This is my Open-Source, made from scratch, WYSIWYG, HTML text editor designed for an end user writing experience anywhere a easy to use but powerful editor would be useful.
 
+### Demo:
+[http://adamdally.org/editor/](http://adamdally.org/editor)
+
+
 Features:
 --------
 
