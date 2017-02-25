@@ -12,6 +12,7 @@ EditorPrototype.start = function(config) {
     var editable = true;
     var draggable = false;
 
+    this.canType = true;
     this.el = config.el;
     this.controlsEl = config.controlsEl;
     this.actions = config.actions;
@@ -55,10 +56,16 @@ EditorPrototype.start = function(config) {
     });
 
     this.el.addEventListener('keypress', function(e) {
+        console.log(that.canType);
+        if (that.canType == false) {
+            e.preventDefault();
+            return;
+        }
         console.log("key press");
         var range,
             current,
             siblingNode;
+
 
         draggable = false;
         range = that.selection.getRangeAt(0);
@@ -137,6 +144,9 @@ EditorPrototype.start = function(config) {
 
 
     this.el.addEventListener('keyup', function(e) {
+        if (!this.canType) {
+            e.preventDefault();
+        }
         var range;
         range = that.selection.getRangeAt(0);
 
@@ -262,6 +272,4 @@ EditorPrototype.start = function(config) {
         }
     }
 
-    //this.test();
-    //this.el.contentEditable = true;
 }

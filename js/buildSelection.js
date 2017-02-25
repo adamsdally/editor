@@ -15,13 +15,21 @@ EditorPrototype.buildSelection = function() {
         endContainer;
     var range = this.selection.getRangeAt(0);
 
-
     //If we're dealing with an empty element.
     if (!range.startContainer.textContent) {
         currentSelection.push({
             node:range.startContainer
         });
         return currentSelection;
+    }
+
+    /*Make sure we end up in text nodes, appears to be an issue within IE*/
+    while (range.endContainer.nodeType == 1) {
+        console.log(range.endContainer);
+        range.setEnd(range.endContainer.childNodes[range.endOffset-1], range.endContainer.childNodes[range.endOffset-1].length);
+    }
+    while (range.startContainer.nodeType == 1) {
+        range.setStart(range.startContainer.childNodes[0], 0);
     }
 
     //First check for single element with single cursor position
@@ -48,7 +56,6 @@ EditorPrototype.buildSelection = function() {
             range.setStart(next, 0);
         }
     }
-    console.log(range);
 
     //If we're at the start of the endContainer then fix:
      if (!next && range.endOffset == 0) {
@@ -66,7 +73,6 @@ EditorPrototype.buildSelection = function() {
         }
         console.log("going backwards");
     }
-
 
 
 
@@ -96,7 +102,6 @@ EditorPrototype.buildSelection = function() {
             }
         }
     }
-
     //Are we dealing within a single node?
     if (startContainer == endContainer) {
         if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
@@ -117,8 +122,8 @@ EditorPrototype.buildSelection = function() {
         return currentSelection;
     }
 
-    //Are we dealing with just ancestral node?
-    if (startContainer.parentElement == endContainer.parentElement) {
+    //Are we dealing with just ancestral node encompassing only the start and end element?
+    if (startContainer.parentElement == endContainer.parentElement && startContainer.parentElement.childNodes.length==2) {
         if (range.startOffset == 0 && range.endOffset == range.endContainer.length) {
             currentSelection.push({
                 node:startContainer.parentElement

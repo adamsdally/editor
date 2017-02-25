@@ -20,11 +20,14 @@ EditorPrototype.resetControls = function() {
     //Build valueActions array
     for (action in this.actions) {
         if (this.actions[action].elements) {
-
             valueActions.push(this.actions[action]);
             this.actions[action].values = [];
         }
     }
+
+    console.log(valueActions);
+
+
 
     //Go through each piece of selection and have it determine its valueActions before joining them to the master set.
     for (x=0; x<currentSelection.length; x++) {
@@ -57,8 +60,19 @@ EditorPrototype.resetControls = function() {
             node = node.parentElement;
         }
 
-        //The actions which are empty for this element need to be pushed onto the valuess
+        //The actions which are empty for this element need to be pushed onto the values
         for (i=0; i<valueActions.length; i++) {
+            //If a value is set by the action then that means it is being managed by it, add.
+            if (valueActions[i].value) {
+                console.log(valueActions[i].value);
+                if (valueActions[i].value === true)
+                    valueActions[i].values.push("true");
+                else if (valueActions[i].value === false)
+                    valueActions[i].values.push("false");
+                else
+                    valueActions[i].values.push(valueActions[i].value);
+                valueActions[i].empty= false;
+            }
 
             if (valueActions[i].empty)
                 valueActions[i].values.push("");

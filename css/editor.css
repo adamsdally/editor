@@ -1,0 +1,206 @@
+/* Editor by Adam Dally */
+/* adamsdally@yahoo.com */
+
+/* General Editor Appearnce */
+/* ------------------------ */
+/* apply a natural box layout model to all elements, but allowing components to change */
+html {
+  box-sizing: border-box;
+
+}
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+main.edit {
+    margin-top:124px;
+}
+nav {
+    position:fixed;
+    top:0px;
+    left:0px;
+    padding:20px;
+    color:white;
+    background-color:#444;
+    border-bottom:2px solid black;
+    width:100%;
+    z-index:1000;
+    display:flex;
+    align-items:center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+nav label {
+    flex-basis:100%;
+    flex-shrink: 0;
+    text-align: center;
+    margin-bottom:8px;
+}
+nav a {
+    color:white;
+    text-decoration: none;
+    margin-left:10px;
+    margin-right:10px;
+    border-bottom:2px solid #444;
+}
+nav .input {
+    margin-left:10px;
+    margin-right:10px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content: center;
+}
+nav .group {
+    align-items: center;
+    display: flex;
+    margin-right: 20px;
+}
+nav .powered {
+    font-weight:bold;
+    color:yellow;
+}
+ #canEdit {
+        display:none;
+}
+#edit {
+    position:fixed;
+    right:0px;
+    top:0px;
+    padding:20px;
+    background-color:#444;
+    z-index: 999;
+    font-size:20px;
+}
+#edit a{
+    color:white;
+    padding:20px;
+}
+/*This is for the debug component of the editor */
+article {
+    margin:20px;
+    padding:20px;
+    border:1px solid black;
+}
+.invisible {
+    display:none;
+}
+
+
+
+
+/* Content Appearnce */
+/* ------------------------ */
+main {
+    padding:32px;
+    outline:0px;
+    font-size:18px;
+    line-height: 2em;
+    display: flex;
+    flex-wrap:wrap;
+}
+p {
+    margin:20px 0px;
+}
+ol, ul {
+    margin:0px 20px;
+}
+li {
+    list-style-position: inside;
+}
+ol li {
+    list-style-type: decimal;
+}
+.column {
+    padding:20px;
+    flex-basis:100%;
+    flex-shrink:0;
+}
+.edit .column {
+    border:1px dashed gray;
+}
+.profile {
+    min-height:200px;
+    border:2px solid black;
+    padding:20px;
+    margin:20px 0px;
+}
+.profile h1 {
+    z-index:100;
+    font-size:2em;
+    padding-top:20px;
+}
+.profile img {
+    margin:20px;
+    float:left;
+    width:100px;
+    height:100px;
+    display:block;
+    background-color:gray;
+}
+.profile p {
+    clear:both;
+    flex-grow:1;
+    font-size:1.2em;
+}
+.selected {
+    border-bottom:2px solid white;
+}
+.color {
+    height:32px;
+    width:32px;
+}
+.color.selected {
+}
+
+
+/* Correct for when the navigation wraps. */
+/* ------------------------ */
+@media all and (max-width: 1240px) {
+  main.edit {
+    margin-top:200px;
+  }
+}
+@media all and (max-width: 780px) {
+    main.edit {
+        margin-top:60px;
+    }
+    #edit {
+        font-size:12px;
+        padding:2px;
+    }
+    nav {
+        font-size:12px;
+        flex-wrap:nowrap;
+        overflow-x: auto;
+    }
+    nav a {
+        margin-right:2px;
+    }
+    nav label {
+        display:none;
+    }
+    nav .group {
+        padding:0px;
+        margin:0px;
+    }
+    nav .input {
+        flex-wrap:nowrap;
+    }
+    nav img {
+        height:16px;
+        width:16px;
+    }
+    nav .color {
+        height:16px;
+        width:16px;
+    }
+}
+@media all and (max-width:660px) {
+    nav {
+    }
+}
+@media all and (max-width:480px) {
+    #canEdit {
+        display:inline;
+    }
+}

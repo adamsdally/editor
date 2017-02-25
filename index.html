@@ -3,154 +3,9 @@
     <head>
         <title>Editor</title>
         <meta charset="utf-8" />
-        <style type="text/css">
-            html, body {
-                margin:0px;
-                padding:0px;
-            }
-            main {
-                padding:32px;
-                display: flex;
-                flex-wrap:wrap;
-                outline:0px;
-                font-size:18px;
-                line-height: 2em;
-
-            }
-            main.edit {
-                margin-top:124px;
-            }
-            h1, h2, h3, strong {
-                font-weight: inherit;
-                padding:0px;
-                margin:0px;
-            }
-            nav {
-                margin:0px;
-                padding:20px;
-                background-color:#444;
-                color:white;
-                border-bottom:2px solid black;
-                top:0px;
-                left:0px;
-                width:100%;
-                z-index:1000;
-                display:flex;
-                align-items:center;
-                justify-content: flex-start;
-                box-sizing: border-box;
-                flex-wrap: wrap;
-                position:fixed;
-            }
-            nav .input {
-                margin-left:10px;
-                margin-right:10px;
-                display:flex;
-                flex-wrap:wrap;
-                justify-content: center;
-            }
-            nav label {
-                flex-basis:100%;
-                text-align: center;
-                margin-bottom:8px;
-            }
-            nav .group {
-                align-items: center;
-                display: flex;
-                margin-right: 20px;
-            }
-            nav a {
-                color:white;
-                text-decoration: none;
-                margin-left:10px;
-                margin-right:10px;
-                border-bottom:2px solid #444;
-            }
-            nav .powered {
-                font-weight:bold;
-                color:yellow;
-            }
-            .bold {
-                font-weight: bold;
-            }
-            .italic {
-                font-style:italic;
-            }
-            .column {
-                padding:20px;
-                flex-basis:100%;
-                box-sizing: border-box;
-            }
-            .edit .column {
-                border:1px dashed gray;
-            }
-            article {
-                margin:20px;
-                padding:20px;
-                border:1px solid black;
-            }
-            .title {
-                display:flex;
-                padding:10px;
-                border:1px solid black;
-                margin:5px;
-            }
-            .profile {
-                min-height:200px;
-                border:2px solid black;
-                padding:20px;
-                margin:20px 0px;
-            }
-            .profile h1 {
-                z-index:100;
-                font-size:2em;
-                padding-top:20px;
-            }
-            .profile img {
-                margin:20px;
-                float:left;
-                width:100px;
-                height:100px;
-                display:block;
-                background-color:gray;
-            }
-            .profile p {
-                clear:both;
-                flex-grow:1;
-                font-size:1.2em;
-            }
-            .selected {
-                border-bottom:2px solid white;
-            }
-            .color {
-                height:32px;
-                width:32px;
-
-                box-sizing: border-box;
-            }
-            .color.selected {
-            }
-            #edit {
-                position:fixed;
-                right:0px;
-                top:0px;
-                padding:20px;
-                background-color:#444;
-                z-index: 10010;
-            }
-            #edit a{
-                color:white;
-            }
-            .invisible {
-                display:none;
-            }
-            @media all and (max-width: 1240px) {
-              main.edit {
-                margin-top:200px;
-              }
-            }
-
-        </style>
+        <meta name="viewport" content="width=device-width, user-scalable=yes, initial-scale=1.0"/>
+        <link rel="stylesheet" href="css/reset.css" />
+        <link rel="stylesheet" href="css/editor.css" />
         <script type="text/javascript" src="js/maintainSelection.js"></script>
         <script type="text/javascript" src="js/buildSelection.js"></script>
         <script type="text/javascript" src="js/isActionable.js"></script>
@@ -167,13 +22,14 @@
         <script type="text/javascript" src="js/Sortable.js"></script>
     </head>
     <body>
-        <div id = "edit"><a href="" id="editLink">Edit</a>
-        <a href="" id="debugLink">Debug</a></div>
+        <div id = "edit"><a href="" id="editLink"><img src="png/edit_white.png" /></a>
+        <a href="" id="debugLink"><img src="png/bug_white.png" /></a></div>
         <nav class="invisible">
             <!--<a href="" data-action="copy">Copy</a>
             <a href="" data-action="paste">Paste</a>-->
             <div class="group">
                 <div class="group">
+                    <a href="" class="binary" data-action="edit" data-value="true" id="canEdit"><img src="png/edit_white.png" /></a>
                     <a href="" class="binary" data-action="bold" data-value="bold"><img src="png/bold_white.png" /></a>
                     <a href="" class="binary" data-action="italic" data-value="italic"><img src="png/italic_white.png" /></a>
                     <a href="" class="binary" data-action="underline" data-value="underline"><img src="png/underline_white.png" /></a>
@@ -242,28 +98,28 @@
                 </div>
             </div>
         </nav>
-        <main style="font-family:arial;">
+        <main style="font-family:Arial;">
             <div class="column">
                 <h1 style="font-weight:bold; font-size:48px;">Editor</h1>
                 <p style="font-size:32px;">By Adam Dally</p>
+                <p style="font-style:italic;">Icons designed by Vaadin from Flaticon</p>
                 <p><a href="https://github.com/adamsdally/editor">View on Github</a></p>
                 <p>This is the start to my full blown WYSIWYG HTML text editor. It packs (or will pack) all of the useful features expected from modern editors but their implementation and the editor's complete extensibility are unique to itself.</p>
-                <h2>Try Editing</h2>
-                <ol>
-                    <li>Show the edit controls by clicking edit in the top right of the page.</li>
-                    <li>
-                        <ol>
-                            <li>Place the cursor somewhere in the content and hit the + icon. You should see the entire content split at the cursor point. Wow!</li>
-                            <li>This is part of the column (layout) actions. Try clicking in each dotted rectangle and change the dropdown to the right of + and - to 50% respectively. The power!</li>
-                            <li>Continue playing around to create complex layouts. The - can be used to merge a column with the one before it.</li>
-                        </ol>
-                    </li>
-                    <li>Now put the cursor at the end of some text and hit the profile control (to the left of the colors). A profile box will appear to place someones profile details with filler/test text in place.</li>
-                    <li>Try modifying the word Editor at the top. I bet you can change the style but not the content...bet that could be useful.</li>
-                    <li>Try the other controls! View the output with the debug tool in the top right.</li>
-                </ol>
-                <p style="font-style:italic;">Not all actions are implmented or working to their design intent and core functionionality has yet to be rigourlsly tested for all use cases. See the github for more information.</p>
-                <p style="font-style:italic;">Icons designed by Vaadin from Flaticon</p>
+                <p style="font-size:24px; font-weight:bold;">Start Editing!</p>
+                <p style="font-size:20px">Show the edit controls by clicking edit icon in the top right of the page, the bug icon will show the html output debugging at the very bottom of the page.</p>
+                <p style="font-style: italic">This editor does not currently work well on mobile devices, although it has not been thoroughly tested there. There are two issues that still need corrected: 1. Events do not seem to be fully registering. 2. I'm attemping to hide the virtual keyboard while making edits but still allowing the cursor to exist for editing by the ribbon. Please use on a computer and try out the awesome screen resizing responsiveness.</p>
+                <p style="font-weight: bold;">Columns:</p>
+                <p>Place the cursor somewhere in the content and hit the + icon. You should see the entire content split at the cursor point. <span style="color: red; font-weight:bold; ">Wow!</span> This is part of the column (layout) actions. Try clicking in each dotted rectangle and change the dropdown to the right of + and - to 50% respectively. <span style="color:red; font-weight:bold;">The power!</span> Continue playing around to create complex layouts. The - can be used to merge a column with the one before it.</p>
+                <p style="font-weight: bold;">Pre-Styled Inserts:</p>
+                <p>Now put the cursor at the end of some text and hit the profile control (to the left of the colors). A profile box will appear to place someones profile details with filler/test text in place.</p>
+                <p style="font-weight: bold;">Custom Restrictions:</p>
+                <p>Try modifying the word Editor at the top. I bet you can change the style but not the content. </p>
+                <p style="font-size:24px; font-weight:bold;">The Future!</p>
+                <p>Not all actions are implmented or working to their design intent and core functionionality has yet to be rigourlsly tested for all use cases. See the github for the most complete information.</p>
+                <p><span style="font-weight:bold;">Actions:</span> Upcoming are working links and images from urls. Additionally numbered and bulleted lists will help complete the basics of well-rounded functionality.</p>
+                <p><span style="font-weight:bold;">Core:</span> Parts of the core will have to be modified to allow for finer tuned restriction controls and the ways element groups are handled to propwerly allow the numbered and ordered lists.</p>
+                <p style="font-size:24px; font-weight:bold;">Thanks for viewing this demo!</p>
+
             </div>
         </main>
         <script type="text/javascript">
@@ -285,6 +141,27 @@
             var tests = {};
 
             var actions = {
+                'edit': {
+                    'value': true,
+                    'event': function(current) {
+                        if (current.editor.canType == true) {
+                            current.editor.canType = false;
+                        } else {
+
+                            current.editor.canType = true;
+                        }
+                            current.action.value = current.editor.canType;
+                        /*
+                        console.log(current.editor.el.isContentEditable);
+                        if (current.editor.el.isContentEditable)
+                            current.editor.el.contentEditable = false;
+                        else
+                            current.editor.el.contentEditable = true;
+                        current.action.value = current.editor.el.isContentEditable;
+                        console.log(current.action);
+                        */
+                    },
+                },
                 'copy': {
                     'init': function(editor) {
                         editor.clipboard = editor.clipboard || "";
@@ -472,6 +349,7 @@
                     'event': function(current){
                         var groupEl = current.editor.parentType(current.selection[0].node, 'group');
                         groupEl.style.flexBasis = current.action.value+"%";
+                        current.action.value = "";
                     }
                 },
                 'font-weight': {
@@ -531,7 +409,10 @@
             });
 
            })();
-
+            if (mobileAndTabletCheck()) {
+                document.getElementById("edit").style.display="none";
+                //document.getElementById("canEdit").style.display="inline";
+            }
         </script>
     </body>
 </html>

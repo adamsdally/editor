@@ -231,8 +231,9 @@ EditorPrototype.tryToCombine = function(element, action) {
     //
     //this bit needs consolidated a tad bit further as it is definitely redundant.
     go = true;
-    if (element.tagName == 'MAIN' || parent.tagName== 'MAIN' || parent.childElementCount > 1)
+    if (element.tagName == 'MAIN' || parent.tagName== 'MAIN' || parent.childNodes.length > 1)
         go = false;
+
     if (go) {
         console.log("Going up!")
         if (this.tryToRemove(element.parentElement))
@@ -319,6 +320,9 @@ EditorPrototype.perform = function(action) {
 
     userSelection = saveSelection(this.el);
 
+    //build selection is returning common ancestor instead of the two individual parts, ish;
+    //but only when two block elements are being selected, ish;
+        console.log(currentSelection);
     currentSelection.forEach(function(current) {
         var startOffset = current.startOffset,
             endOffset   = current.endOffset,
@@ -329,15 +333,16 @@ EditorPrototype.perform = function(action) {
             i,
             count,
             otherNode;
-
         //Go up as far as MAIN looking for value to set as action2
         //If found then distribute value to children and remove
         //Then repeat until we are at level of node
+        console.log(node);
         otherNode = node;
         if (otherNode.nodeType == 3)
             otherNode = otherNode.parentElement;
         while (true) {
                 value = that.hasProperty(otherNode, action, false);
+                console.log(value);
                 if (value) {
                     action2 = JSON.parse(JSON.stringify(action));
                     action2.value = value;
@@ -348,7 +353,8 @@ EditorPrototype.perform = function(action) {
                 otherNode = otherNode.parentElement;
 
         }
-
+        console.log(node);
+        console.log(action2);
         //Break apart text nodes
         if (node.nodeType ==3 && node.nodeValue.trim())  {
 
@@ -370,6 +376,8 @@ EditorPrototype.perform = function(action) {
         //and then distribute that style to all decendants
         //and add that element to the unapplyElements
         parent = node.parentElement;
+        console.log(parent);
+        console.log(node);
         while (action2 && parent) {
             if (that.hasProperty(parent, action, false)) {
                 for (i=0; i< parent.childNodes.length; i++) {
@@ -387,6 +395,7 @@ EditorPrototype.perform = function(action) {
         applyElements.push(node);
     });
 
+    console.log(applyElements);
     this.l('Preparing');
     applyElements.forEach(function(current) {
         current = that.apply(current , action, true);
