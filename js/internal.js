@@ -11,7 +11,7 @@ to just p
 //------------------------
 //-----l------------------
 //------------------------
-EditorPrototype.l = function (title, clear) {
+EditorPrototype.l = function (title, clear, message) {
     var old;
 
     if (!this.config.debug)
@@ -24,7 +24,11 @@ EditorPrototype.l = function (title, clear) {
         old = title;
     else
         old = document.getElementsByTagName('article')[0].innerHTML+' '+title;
-    document.getElementsByTagName('article')[0].innerHTML = old+ '<p>'+this.htmlEncode(this.el.outerHTML)+'</p> ';
+    
+    if (message)
+        document.getElementsByTagName('article')[0].innerHTML = old+ '<p>'+message+'</p> ';
+    else
+        document.getElementsByTagName('article')[0].innerHTML = old+ '<p>'+this.htmlEncode(this.el.outerHTML)+'</p> ';
 }
 
 //------------------------
@@ -310,6 +314,9 @@ EditorPrototype.tryToRemove = function(element) {
 // perform saves and restores selection along with activating a negate sequence
 // and then apply sequence
 EditorPrototype.perform = function(action) {
+    
+    this.l("Performing" , false, "Attribute: "+action.attribute);
+    
     var current,
         userSelection,
         currentSelection = this.buildSelection(),
@@ -317,13 +324,23 @@ EditorPrototype.perform = function(action) {
         applyElements = [],
         unapplyElements = [],
         combineElements = [];
-
+    
+    this.l("Build Selection", false, " - ");
+    
     userSelection = saveSelection(this.el);
-
+    console.log(userSelection);
+    
+    var debug = "";
+    for (var i=0; i<currentSelection.length; i++) {
+        debug += currentSelection[i].node.textContent+ " ";
+    }
+    this.l("Selection", false, debug);
+    
     //build selection is returning common ancestor instead of the two individual parts, ish;
     //but only when two block elements are being selected, ish;
         console.log(currentSelection);
     currentSelection.forEach(function(current) {
+        that.l("Current", false, current.node.textContent);
         var startOffset = current.startOffset,
             endOffset   = current.endOffset,
             node        = current.node,
@@ -338,14 +355,18 @@ EditorPrototype.perform = function(action) {
         //Then repeat until we are at level of node
         console.log(node);
         otherNode = node;
+        
         if (otherNode.nodeType == 3)
             otherNode = otherNode.parentElement;
         while (true) {
+                that.l("Other node");
                 value = that.hasProperty(otherNode, action, false);
                 console.log(value);
                 if (value) {
+                    that.l("Copying", false, "copying")
                     action2 = JSON.parse(JSON.stringify(action));
                     action2.value = value;
+                    that.l("Copyied", false, "copied")
                 }
                 if (otherNode.tagName == 'MAIN')
                     break;
@@ -353,6 +374,7 @@ EditorPrototype.perform = function(action) {
                 otherNode = otherNode.parentElement;
 
         }
+        that.l("Node", false, node.textContent);
         console.log(node);
         console.log(action2);
         //Break apart text nodes
@@ -371,6 +393,7 @@ EditorPrototype.perform = function(action) {
             }
             node =  that.createParentElement(node, 'SPAN');
         }
+        that.l("Node2", false, node.textContent);
 
         //Repeatedly go from node to the closest ancestor with this style
         //and then distribute that style to all decendants
@@ -392,10 +415,11 @@ EditorPrototype.perform = function(action) {
                 parent = parent.parentElement;
             }
         }
+        
+        that.l("Node3", false, node.textContent);
         applyElements.push(node);
     });
 
-    console.log(applyElements);
     this.l('Preparing');
     applyElements.forEach(function(current) {
         current = that.apply(current , action, true);
@@ -421,6 +445,7 @@ EditorPrototype.perform = function(action) {
 
     this.el.normalize();
 
+    console.log(userSelection);
     restoreSelection(this.el, userSelection);
 
 

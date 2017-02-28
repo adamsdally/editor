@@ -197,8 +197,10 @@ EditorPrototype.start = function(config) {
                 action.value = target.dataset['value'];
         }
 
+        that.l("About to Perform!");
         that.perform(action);
 
+        that.l("Running Change Event");
         that.changeEvent();
 
         return false;

@@ -2,6 +2,7 @@
 var EditorPrototype = window.EditorPrototype || {};
 
 EditorPrototype.buildSelection = function() {
+        this.l("going to build selection", false, "-");
     var currentSelection = [],
         startSelection = [],
         endSelection = [],
@@ -23,6 +24,7 @@ EditorPrototype.buildSelection = function() {
         return currentSelection;
     }
 
+    console.log(range);
     /*Make sure we end up in text nodes, appears to be an issue within IE*/
     while (range.endContainer.nodeType == 1) {
         console.log(range.endContainer);

@@ -24,7 +24,7 @@
     <body>
         <div id = "edit"><a href="" id="editLink"><img src="png/edit_white.png" /></a>
         <a href="" id="debugLink"><img src="png/bug_white.png" /></a></div>
-        <nav class="invisible">
+        <nav>
             <!--<a href="" data-action="copy">Copy</a>
             <a href="" data-action="paste">Paste</a>-->
             <div class="group">
@@ -79,12 +79,14 @@
                     <a href="" class="binary color" data-action="color" data-value="green" style="background-color:green"></a>
                     <a href="" class="binary color" data-action="color" data-value="yellow" style="background-color:yellow"></a>
                     <a href="" class="binary color" data-action="color" data-value="black" style="background-color:black"></a>
+                    <a href="" data-action="box-shadow" data-value="4px 4px 4px black">Shadow</a>
                 </div>
                 <div class="group">
                     <div class="input">
                     <label><img src="png/split_white.png" /></label>
                     <a href="" data-action="column"><img src="png/plus-circle_white.png" /></a>
                     <a href="" data-action="remove-column"><img src="png/minus-circle-1_white.png" /></a>
+                    
                         <select data-action="column-width" name="column-width">
                             <option value=""></option>
                             <option value="100">100%</option>
@@ -100,9 +102,11 @@
         </nav>
         <main style="font-family:Arial;">
             <div class="column">
-                <h1 style="font-weight:bold; font-size:48px;">Editor</h1>
                 <p style="font-size:32px;">By Adam Dally</p>
-                <p style="font-style:italic;">Icons designed by Vaadin from Flaticon</p>
+            </div>
+        </main>
+                <!--<h1 style="font-weight:bold; font-size:48px;">Editor</h1>-->
+                <!--<p style="font-style:italic;">Icons designed by Vaadin from Flaticon</p>
                 <p><a href="https://github.com/adamsdally/editor">View on Github</a></p>
                 <p>This is the start to my full blown WYSIWYG HTML text editor. It packs (or will pack) all of the useful features expected from modern editors but their implementation and the editor's complete extensibility are unique to itself.</p>
                 <p style="font-size:24px; font-weight:bold;">Start Editing!</p>
@@ -119,9 +123,7 @@
                 <p><span style="font-weight:bold;">Actions:</span> Upcoming are working links and images from urls. Additionally numbered and bulleted lists will help complete the basics of well-rounded functionality.</p>
                 <p><span style="font-weight:bold;">Core:</span> Parts of the core will have to be modified to allow for finer tuned restriction controls and the ways element groups are handled to propwerly allow the numbered and ordered lists.</p>
                 <p style="font-size:24px; font-weight:bold;">Thanks for viewing this demo!</p>
-
-            </div>
-        </main>
+                -->
         <script type="text/javascript">
         'use strict';
 
@@ -129,7 +131,7 @@
             var el = document.getElementsByTagName('main')[0];
             var controlsEl = document.getElementsByTagName('NAV')[0];
 
-            //el.contentEditable = true;
+            el.contentEditable = true;
 
             //grouping elements ===> 'DIV'
             var blockElements = ['MAIN', 'H1', 'P'],
@@ -146,17 +148,17 @@
                     'event': function(current) {
                         if (current.editor.canType == true) {
                             current.editor.canType = false;
+                            current.editor.el.contentEditable = false;
                         } else {
 
                             current.editor.canType = true;
+                            current.editor.el.contentEditable = true;
                         }
                             current.action.value = current.editor.canType;
-                        /*
-                        console.log(current.editor.el.isContentEditable);
+                        
+                        /*console.log(current.editor.el.isContentEditable);
                         if (current.editor.el.isContentEditable)
-                            current.editor.el.contentEditable = false;
                         else
-                            current.editor.el.contentEditable = true;
                         current.action.value = current.editor.el.isContentEditable;
                         console.log(current.action);
                         */
@@ -246,6 +248,10 @@
                 'underline' : {
                     'binary':true,
                     'attribute': 'text-decoration',
+                },
+                'box-shadow' : {
+                    'binary':true,
+                    'attribute': 'box-shadow',
                 },
                 'italic': {
                     'binary':true,
@@ -397,7 +403,7 @@
                 document.getElementsByTagName('nav')[0].classList.toggle('invisible');
                 document.getElementsByTagName('main')[0].classList.toggle('edit');
                 if (document.getElementsByTagName('main')[0].classList.contains('edit')) {
-                    document.getElementsByTagName('main')[0].contentEditable = true;
+                    document.getElementsByTagName('main')[0].contentEditable = false;
                 } else {
                     document.getElementsByTagName('main')[0].contentEditable = false;
 
@@ -405,14 +411,15 @@
             });
             document.getElementById('debugLink').addEventListener('click', function(e) {
                 e.preventDefault();
-                document.getElementsByTagName('article')[0].classList.toggle('invisible');
             });
 
            })();
-            if (mobileAndTabletCheck()) {
-                document.getElementById("edit").style.display="none";
-                //document.getElementById("canEdit").style.display="inline";
-            }
+            //if (mobileAndTabletCheck()) {
+            //}
+            //document.getElementById("edit").style.display="none";
+                document.getElementsByTagName('main')[0].classList.toggle('edit');
+            document.getElementsByTagName('article')[0].classList.toggle('invisible');
+            document.getElementById("canEdit").style.display="inline";
         </script>
     </body>
 </html>

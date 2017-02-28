@@ -8,9 +8,9 @@ if (window.getSelection && document.createRange) {
         var range = window.getSelection().getRangeAt(0);
         var preSelectionRange = range.cloneRange();
         preSelectionRange.selectNodeContents(containerEl);
-        console.log(preSelectionRange.toString());
+        //console.log(preSelectionRange.toString());
 
-        console.log(containerEl.getElementsByTagName('BR'));
+        //console.log(containerEl.getElementsByTagName('BR'));
         preSelectionRange.setEnd(range.startContainer, range.startOffset);
         var start = preSelectionRange.toString().length;
 
@@ -26,12 +26,15 @@ if (window.getSelection && document.createRange) {
         range.setStart(containerEl, 0);
         range.collapse(true);
         var nodeStack = [containerEl], node, foundStart = false, stop = false, pass=savedSel.atBeginning;
-
+        console.log(savedSel);
         while (!stop && (node = nodeStack.pop())) {
+            console.log(node);
             if (node.nodeType == 3) {
                 var nextCharIndex = charIndex + node.length;
+                console.log(charIndex);
+                console.log(nextCharIndex);
                 if (!foundStart && savedSel.start >= charIndex && savedSel.start <= nextCharIndex) {
-                    if (pass) {
+                    if (pass && nextCharIndex != savedSel.end) {
                         pass=false;
                     } else {
                         range.setStart(node, savedSel.start - charIndex);
